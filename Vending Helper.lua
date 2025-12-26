@@ -219,7 +219,6 @@ add_spacer|small|
                     vend.position.x,
                     vend.position.y,
                     vendIdx,
-                    vend.vendPrice,
                     vendIdx
                 )
             end
@@ -358,4 +357,4 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("Update 1.0")
+LogToConsole("Update 1.2")
