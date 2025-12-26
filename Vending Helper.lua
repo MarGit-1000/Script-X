@@ -23,7 +23,7 @@ local function scanVendingMachines()
     
     for _, tile in pairs(tiles) do
         -- Cek apakah tile adalah vending machine (ID: 2796 atau 9268)
-        if (tile.fg == 9268 or tile.fg == 2796) and tile.extra then
+        if (tile.fg == 9268 or tile.fg == 2978) and tile.extra then
             local vendData = {
                 position = {
                     x = tile.x or 0,
@@ -306,16 +306,21 @@ addHook(function(packetType, packet)
                 if vend and vend.position then
                     processCount = processCount + 1
                     
+                    local priceLabel = perWorldLock and "Item" or "WL"
+                    local modeLabel  = perWorldLock and "Per World Lock" or "Per Item"
+
                     LogToConsole(string.format(
-                        "`9[%d/%d] `2Updating vending at (%d,%d): %s -> %d WL `o(%s)",
+                        "`9[%d/%d] `2Updating vending at (%d,%d): %s -> %d %s `o(%s)",
                         processCount,
                         totalSelected,
                         vend.position.x,
                         vend.position.y,
                         vend.vendItemName,
                         newPrice,
-                        perWorldLock and "Per World Lock" or "Per Item"
+                        priceLabel,
+                        modeLabel
                     ))
+
                     
                     -- Kirim packet untuk update vending
                     local packetData = string.format(
