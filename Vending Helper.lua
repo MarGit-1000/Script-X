@@ -209,7 +209,7 @@ add_spacer|small|
             if vend then
                 dialog = dialog .. string.format([[
 add_textbox|`w%d. %s - %d WL at (%d,%d)|left|
-add_text_input|price_vending_%d|New Price:|0|15|
+add_text_input|price_vending_%d|New Price:|%d|15|
 add_checkbox|per_world_%d|`wPer World Lock|0|
 add_spacer|small|
 ]], 
@@ -358,4 +358,4 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("Update 1.1")
+LogToConsole("Update 1.0")
