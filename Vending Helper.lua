@@ -23,7 +23,7 @@ local function scanVendingMachines()
     
     for _, tile in pairs(tiles) do
         -- Cek apakah tile adalah vending machine (ID: 2796 atau 9268)
-        if tile.fg == 9268 or tile.fg == 2796 then
+        if (tile.fg == 9268 or tile.fg == 2796) and tile.extra then
             local vendData = {
                 position = {
                     x = tile.x or 0,
