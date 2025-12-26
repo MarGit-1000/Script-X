@@ -358,4 +358,4 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("Update 1.0")
+LogToConsole("Update 1.1")
