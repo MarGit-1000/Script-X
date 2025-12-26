@@ -167,11 +167,9 @@ add_spacer|small|
                and vend.position and vend.position.x and vend.position.y then
                 
                 local displayText = string.format(
-                    "%s - %d WL at (%d,%d)",
+                    "`w%s - %d WL",
                     vend.vendItemName,
-                    vend.vendPrice,
-                    vend.position.x,
-                    vend.position.y
+                    vend.vendPrice
                 )
                 
                 dialog = dialog .. string.format(
