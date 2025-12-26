@@ -175,7 +175,7 @@ add_spacer|small|
                 )
                 
                 dialog = dialog .. string.format(
-                    "add_checkicon|vending_%d|%s|||0|\n",
+                    "add_checkicon|vending_%d|%s||%d||0|\n",
                     i,
                     displayText,
                     vend.vendItem
