@@ -551,10 +551,10 @@ addHook(function(packetType, packet)
         end
         
         -- Increment counter hanya jika ada selection baru dan bukan dari button OK
-        if hasNewSelection and hasButtonId then
+        -- SETIAP packet item_picker_empty dihitung
             itemSelectionCount = itemSelectionCount + 1
             LogToConsole(string.format("`9Selection count: %d/%d", itemSelectionCount, maxSelectionCount))
-        end
+
         
         -- Jika counter sudah mencapai batas atau user klik OK, lanjut ke konfirmasi
         if itemSelectionCount >= maxSelectionCount or hasButtonId then
@@ -661,5 +661,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.7 - Counter System Loaded!")
+LogToConsole("`2Vending Machine Tools v1.666 - Counter System Loaded!")
 LogToConsole("`9Type /start to open menu")
