@@ -654,68 +654,38 @@ local function applyItemToEmptyVending(packet)
     local totalSelected = #selectedVendings
     local successCount = 0
     local failCount = 0
-    
-    LogToConsole(string.format("`9Starting to fill %d vending(s)", totalSelected))
-    
-    for idx, vendIdx in ipairs(selectedVendings) do
-        -- FIX: Pattern yang benar untuk item picker
-        local itemPattern = "\nitem_" .. vendIdx .. "|(%d+)"
-        local itemIDStr = packet:match(itemPattern)
+
+    for _, vendIdx in ipairs(selectedVendings) do
+        local itemIDStr = packet:match("item_" .. vendIdx .. "|(%d+)")
         local itemID = tonumber(itemIDStr)
-        
-        -- Debug log untuk melihat apa yang di-parse
-        LogToConsole(string.format("`oDebug: Looking for pattern 'item_%d' - Found: %s", 
-            vendIdx, 
-            itemIDStr or "nil"
-        ))
-        
+
         if itemID and itemID > 0 then
             local vend = vendingList[vendIdx]
-            
             if vend and vend.position then
                 successCount = successCount + 1
-                
-                local itemInfo = getItemInfoByID(itemID)
-                local itemName = itemInfo and itemInfo.name or "Unknown"
-                
-                LogToConsole(string.format(
-                    "`9[%d/%d] `2Filling vending at (%d,%d) with `3%s `9(ID: `e%d`9)",
-                    successCount,
-                    totalSelected,
-                    vend.position.x,
-                    vend.position.y,
-                    itemName,
-                    itemID
-                ))
-                
-                -- Kirim packet untuk stock item ke vending
+
                 local packetData = string.format(
                     "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nstockitem|%d\n",
                     vend.position.x,
                     vend.position.y,
                     itemID
                 )
-                
+
                 SendPacket(2, packetData)
                 Sleep(150)
             else
                 failCount = failCount + 1
-                LogToConsole("`4Invalid vending data at index " .. vendIdx)
             end
         else
             failCount = failCount + 1
-            LogToConsole(string.format("`4No item selected for vending at index %d", vendIdx))
+            LogToConsole("`4No item selected for vending index " .. vendIdx)
         end
     end
-    
-    LogToConsole(string.format(
-        "`9[DONE] `2Success: %d | `4Failed: %d",
-        successCount,
-        failCount
-    ))
-    
+
+    LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
     selectedVendings = {}
 end
+
 
 -- ========================================
 -- PACKET HOOK HANDLER (UPDATE)
@@ -834,4 +804,4 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("Update 2.2")
+LogToConsole("Update 2.3")
