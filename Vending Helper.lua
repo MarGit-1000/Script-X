@@ -762,17 +762,11 @@ addHook(function(packetType, packet)
     end
     
     if packet:find("apply_item_empty") then
-        local itemID = tonumber(packet:match("item|(%d+)"))
+        -- Debug: print seluruh packet
+        LogToConsole("`oPacket content:")
+        LogToConsole(packet)
         
-        if itemID then
-            -- Buka dialog lagi dengan info item terpilih
-            show_item_picker_for_empty(itemID)
-            -- Tapi juga proses apply-nya
-            applyItemToEmptyVending(packet)
-        else
-            LogToConsole("`4No item selected!")
-        end
-        
+        applyItemToEmptyVending(packet)
         return true
     end
     
@@ -804,4 +798,4 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("Update 2.3")
+LogToConsole("Update 2.4")
