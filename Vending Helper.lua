@@ -551,7 +551,7 @@ addHook(function(packetType, packet)
         end
         
         -- Increment counter hanya jika ada selection baru dan bukan dari button OK
-        if hasNewSelection and not hasButtonId then
+        if hasNewSelection and hasButtonId then
             itemSelectionCount = itemSelectionCount + 1
             LogToConsole(string.format("`9Selection count: %d/%d", itemSelectionCount, maxSelectionCount))
         end
@@ -661,5 +661,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.6 - Counter System Loaded!")
+LogToConsole("`2Vending Machine Tools v1.7 - Counter System Loaded!")
 LogToConsole("`9Type /start to open menu")
