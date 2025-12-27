@@ -612,41 +612,31 @@ end_dialog|select_empty|Cancel|OK|
     })
 end
 
-function show_item_picker_for_empty(selectedItemID)
+function show_item_picker_for_empty()
     local dialog = [[
 add_label_with_icon|big|`9Set Item for Empty Vending|left|9270|
+add_textbox|`wSelect item for each vending:|left|
 add_spacer|small|
 ]]
     
-    -- Tampilkan list vending terpilih
-    if #selectedVendings > 0 then
-        dialog = dialog .. "add_textbox|`wSelected Vendings:|left|\n"
+    if #selectedVendings == 0 then
+        dialog = dialog .. "add_textbox|`4No vending selected!|left|\n"
+    else
         for idx, vendIdx in ipairs(selectedVendings) do
             local vend = vendingList[vendIdx]
             if vend then
-                dialog = dialog .. string.format(
-                    "add_textbox|`o%d. `wVending (%d,%d)|left|\n",
+                dialog = dialog .. string.format([[
+add_textbox|`w%d. Vending (%d,%d)|left|
+add_item_picker|item_%d|`wSelect Item:|242|
+add_spacer|small|
+]], 
                     idx,
                     vend.position.x,
-                    vend.position.y
+                    vend.position.y,
+                    vendIdx
                 )
             end
         end
-        dialog = dialog .. "add_spacer|small|\n"
-    end
-    
-    -- Item picker
-    dialog = dialog .. "add_item_picker|item|`wSelect Item:|242|\ndd_spacer|small|\n"
-    
-    -- Tampilkan info item yang dipilih
-    if selectedItemID then
-        local itemInfo = getItemInfoByID(selectedItemID)
-        local itemName = itemInfo and itemInfo.name or "Unknown"
-        dialog = dialog .. string.format(
-            "add_textbox|`2Item Selected: `3%s`2, ID: `e%d|left|\n",
-            itemName,
-            selectedItemID
-        )
     end
     
     dialog = dialog .. [[
@@ -661,51 +651,54 @@ end_dialog|apply_item_empty|Cancel|OK|
 end
 
 local function applyItemToEmptyVending(packet)
-    local itemID = tonumber(packet:match("item|(%d+)"))
-    
-    if not itemID then
-        LogToConsole("`4No item selected!")
-        return
-    end
-    
-    local itemInfo = getItemInfoByID(itemID)
-    local itemName = itemInfo and itemInfo.name or "Unknown"
-    
     local totalSelected = #selectedVendings
     local successCount = 0
     local failCount = 0
     
-    LogToConsole(string.format("`9Starting to fill %d vending(s) with `3%s `9(ID: `e%d`9)", 
-        totalSelected, itemName, itemID))
+    LogToConsole(string.format("`9Starting to fill %d vending(s)", totalSelected))
     
     for idx, vendIdx in ipairs(selectedVendings) do
-        local vend = vendingList[vendIdx]
+        -- Extract item ID untuk vending ini
+        local itemPattern = "item_" .. vendIdx .. "|(%d+)"
+        local itemIDStr = packet:match(itemPattern)
+        local itemID = tonumber(itemIDStr)
         
-        if vend and vend.position then
-            successCount = successCount + 1
+        if itemID then
+            local vend = vendingList[vendIdx]
             
-            LogToConsole(string.format(
-                "`9[%d/%d] `2Filling vending at (%d,%d) with `3%s",
-                successCount,
-                totalSelected,
-                vend.position.x,
-                vend.position.y,
-                itemName
-            ))
-            
-            -- Kirim packet untuk stock item ke vending
-            local packetData = string.format(
-                "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nstockitem|%d\n",
-                vend.position.x,
-                vend.position.y,
-                itemID
-            )
-            
-            SendPacket(2, packetData)
-            Sleep(150) -- Delay 150ms per proses
+            if vend and vend.position then
+                successCount = successCount + 1
+                
+                local itemInfo = getItemInfoByID(itemID)
+                local itemName = itemInfo and itemInfo.name or "Unknown"
+                
+                LogToConsole(string.format(
+                    "`9[%d/%d] `2Filling vending at (%d,%d) with `3%s `9(ID: `e%d`9)",
+                    successCount,
+                    totalSelected,
+                    vend.position.x,
+                    vend.position.y,
+                    itemName,
+                    itemID
+                ))
+                
+                -- Kirim packet untuk stock item ke vending
+                local packetData = string.format(
+                    "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nstockitem|%d\n",
+                    vend.position.x,
+                    vend.position.y,
+                    itemID
+                )
+                
+                SendPacket(2, packetData)
+                Sleep(150) -- Delay 150ms per proses
+            else
+                failCount = failCount + 1
+                LogToConsole("`4Invalid vending data at index " .. vendIdx)
+            end
         else
             failCount = failCount + 1
-            LogToConsole("`4Invalid vending data at index " .. vendIdx)
+            LogToConsole(string.format("`4No item selected for vending at index %d", vendIdx))
         end
     end
     
@@ -836,4 +829,4 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("Update 2.0")
+LogToConsole("update 2.1")
