@@ -1,5 +1,5 @@
 -- ========================================
--- VENDING MACHINE TOOLS v1.5 - FIXED ITEM SELECTION
+-- VENDING MACHINE TOOLS v1.6 - COUNTER SYSTEM
 -- ========================================
 
 -- Global Variables
@@ -8,6 +8,8 @@ local totalVending = 0
 local selectedVendings = {}
 local selectedItems = {} -- Storage untuk item yang dipilih
 local isSelectingItems = false -- Flag untuk mencegah auto-trigger
+local itemSelectionCount = 0 -- Counter untuk track berapa kali user memilih item
+local maxSelectionCount = 0 -- Batas maksimal selection (jumlah vending + 10)
 
 -- ========================================
 -- UTILITY FUNCTIONS
@@ -373,8 +375,15 @@ add_spacer|small|
         end
     end
     
+    -- Tampilkan counter di bawah
+    dialog = dialog .. string.format(
+        "add_textbox|`oSelection Counter: `e%d/%d `o(Auto-confirm when full)|left|\n",
+        itemSelectionCount,
+        maxSelectionCount
+    )
+    
     dialog = dialog .. [[
-add_textbox|`oClick OK to continue after selecting all items.|left|
+add_textbox|`oClick OK to continue or keep selecting items.|left|
 add_quick_exit||
 end_dialog|item_picker_empty|Cancel|OK|
 ]]
@@ -491,6 +500,7 @@ addHook(function(packetType, packet)
     if packet:find("select_empty") then
         selectedVendings = {}
         selectedItems = {} -- Reset selected items
+        itemSelectionCount = 0 -- Reset counter
         isSelectingItems = true -- Set flag
         
         for i = 1, totalVending do
@@ -504,7 +514,10 @@ addHook(function(packetType, packet)
         end
         
         if #selectedVendings > 0 then
+            -- Set batas maksimal = jumlah vending yang dipilih + 10
+            maxSelectionCount = #selectedVendings + 10
             LogToConsole(string.format("`2Selected %d empty vending(s)", #selectedVendings))
+            LogToConsole(string.format("`9You have %d selection chances before auto-confirm", maxSelectionCount))
             show_item_picker_for_empty()
         else
             LogToConsole("`4No vending selected!")
@@ -513,20 +526,23 @@ addHook(function(packetType, packet)
         return true
     end
     
-    -- HANDLER: Update item dari item picker (jangan langsung confirm!)
+    -- HANDLER: Update item dari item picker dengan sistem counter
     if packet:find("item_picker_empty") and isSelectingItems then
         -- Cek apakah ini dari button OK atau dari item picker individual
         local hasButtonId = packet:find("buttonClicked|")
         
         -- Update item selections
+        local hasNewSelection = false
         for _, vendIdx in ipairs(selectedVendings) do
             local itemIDStr = packet:match("item_" .. vendIdx .. "|(%d+)")
             local itemID = tonumber(itemIDStr)
             
             if itemID and itemID > 0 then
-                -- Update selection
+                -- Cek apakah ini selection baru atau update
                 if not selectedItems[vendIdx] or selectedItems[vendIdx] ~= itemID then
                     selectedItems[vendIdx] = itemID
+                    hasNewSelection = true
+                    
                     local itemInfo = getItemInfoByID(itemID)
                     local itemName = itemInfo and itemInfo.name or "Unknown"
                     LogToConsole(string.format("`2Vending %d: Updated to %s (ID: %d)", vendIdx, itemName, itemID))
@@ -534,12 +550,20 @@ addHook(function(packetType, packet)
             end
         end
         
-        -- Jika ada buttonClicked (artinya user klik OK), lanjut ke konfirmasi
-        if hasButtonId then
+        -- Increment counter hanya jika ada selection baru dan bukan dari button OK
+        if hasNewSelection and not hasButtonId then
+            itemSelectionCount = itemSelectionCount + 1
+            LogToConsole(string.format("`9Selection count: %d/%d", itemSelectionCount, maxSelectionCount))
+        end
+        
+        -- Jika counter sudah mencapai batas atau user klik OK, lanjut ke konfirmasi
+        if itemSelectionCount >= maxSelectionCount or hasButtonId then
+            LogToConsole("`2Selection completed! Moving to confirmation...")
             isSelectingItems = false
+            itemSelectionCount = 0 -- Reset counter
             show_confirmation_empty()
         else
-            -- Jika tidak (user baru pilih item), re-show dialog item picker dengan update
+            -- Jika belum, re-show dialog item picker dengan update counter
             show_item_picker_for_empty()
         end
         
@@ -603,6 +627,8 @@ addHook(function(packetType, packet)
         -- Clear selections
         selectedVendings = {}
         selectedItems = {}
+        itemSelectionCount = 0
+        maxSelectionCount = 0
         
         return true
     end
@@ -635,5 +661,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.5 - FIXED Item Selection Loaded!")
+LogToConsole("`2Vending Machine Tools v1.6 - Counter System Loaded!")
 LogToConsole("`9Type /start to open menu")
