@@ -289,7 +289,7 @@ function show_empty_vending()
     -- Filter hanya vending yang kosong (vendItem = 0 atau 2)
     local emptyVendings = {}
     for i, vend in ipairs(vendingList) do
-        if vend.vendItem == nil then
+        if vend.vendItem == 0 then
             table.insert(emptyVendings, {
                 originalIndex = i,
                 vend = vend
@@ -320,7 +320,7 @@ add_spacer|small|
                 )
                 
                 dialog = dialog .. string.format(
-                    "add_checkicon|vending_empty_%d|%s||2||0|\n",
+                    "add_checkicon|vending_empty_%d|%s||1494||0|\n",
                     originalIdx,
                     displayText
                 )
@@ -440,5 +440,5 @@ end, "OnSendPacket")
 -- INITIALIZATION
 -- ========================================
 
-LogToConsole("`2Vending Machine Tools v1.4 Loaded!")
+LogToConsole("`2Vending Machine Tools v1.4.1 Loaded!")
 LogToConsole("`oType `/start` to open menu")
