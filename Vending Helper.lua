@@ -658,12 +658,18 @@ local function applyItemToEmptyVending(packet)
     LogToConsole(string.format("`9Starting to fill %d vending(s)", totalSelected))
     
     for idx, vendIdx in ipairs(selectedVendings) do
-        -- Extract item ID untuk vending ini
-        local itemPattern = "item_" .. vendIdx .. "|(%d+)"
+        -- FIX: Pattern yang benar untuk item picker
+        local itemPattern = "\nitem_" .. vendIdx .. "|(%d+)"
         local itemIDStr = packet:match(itemPattern)
         local itemID = tonumber(itemIDStr)
         
-        if itemID then
+        -- Debug log untuk melihat apa yang di-parse
+        LogToConsole(string.format("`oDebug: Looking for pattern 'item_%d' - Found: %s", 
+            vendIdx, 
+            itemIDStr or "nil"
+        ))
+        
+        if itemID and itemID > 0 then
             local vend = vendingList[vendIdx]
             
             if vend and vend.position then
@@ -691,7 +697,7 @@ local function applyItemToEmptyVending(packet)
                 )
                 
                 SendPacket(2, packetData)
-                Sleep(150) -- Delay 150ms per proses
+                Sleep(150)
             else
                 failCount = failCount + 1
                 LogToConsole("`4Invalid vending data at index " .. vendIdx)
@@ -708,7 +714,6 @@ local function applyItemToEmptyVending(packet)
         failCount
     ))
     
-    -- Clear selection
     selectedVendings = {}
 end
 
@@ -829,4 +834,4 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("update 2.1")
+LogToConsole("Update 2.2")
