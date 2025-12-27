@@ -514,7 +514,7 @@ addHook(function(packetType, packet)
     end
     
     -- HANDLER: Save item selection (dialog name berbeda!)
-    if packet:find("save_item_selection") and isSelectingItems then
+    if packet:find("buttonClicked|save_item_selection") and isSelectingItems then
         -- Save semua item yang dipilih
         for _, vendIdx in ipairs(selectedVendings) do
             local itemIDStr = packet:match("item_" .. vendIdx .. "|(%d+)")
@@ -623,5 +623,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.4 - FIXED Loaded!2")
+LogToConsole("`2Vending Machine Tools v1.5")
 LogToConsole("`9Type /start to open menu")
