@@ -1,5 +1,5 @@
 -- ========================================
--- VENDING MACHINE TOOLS v1.4 - FIXED
+-- VENDING MACHINE TOOLS v1.5 - FIXED ITEM SELECTION
 -- ========================================
 
 -- Global Variables
@@ -374,9 +374,9 @@ add_spacer|small|
     end
     
     dialog = dialog .. [[
-add_textbox|`oClick OK to save selections. Click item picker to change.|left|
+add_textbox|`oClick OK to continue after selecting all items.|left|
 add_quick_exit||
-end_dialog|save_item_selection|Cancel|OK|
+end_dialog|item_picker_empty|Cancel|OK|
 ]]
     
     SendVariant({
@@ -513,24 +513,36 @@ addHook(function(packetType, packet)
         return true
     end
     
-    -- HANDLER: Save item selection (dialog name berbeda!)
-    if packet:find("buttonClicked|save_item_selection") and isSelectingItems then
-        -- Save semua item yang dipilih
+    -- HANDLER: Update item dari item picker (jangan langsung confirm!)
+    if packet:find("item_picker_empty") and isSelectingItems then
+        -- Cek apakah ini dari button OK atau dari item picker individual
+        local hasButtonId = packet:find("buttonClicked|")
+        
+        -- Update item selections
         for _, vendIdx in ipairs(selectedVendings) do
             local itemIDStr = packet:match("item_" .. vendIdx .. "|(%d+)")
             local itemID = tonumber(itemIDStr)
             
             if itemID and itemID > 0 then
-                selectedItems[vendIdx] = itemID
-                local itemInfo = getItemInfoByID(itemID)
-                local itemName = itemInfo and itemInfo.name or "Unknown"
-                LogToConsole(string.format("`2Vending %d: Selected %s (ID: %d)", vendIdx, itemName, itemID))
+                -- Update selection
+                if not selectedItems[vendIdx] or selectedItems[vendIdx] ~= itemID then
+                    selectedItems[vendIdx] = itemID
+                    local itemInfo = getItemInfoByID(itemID)
+                    local itemName = itemInfo and itemInfo.name or "Unknown"
+                    LogToConsole(string.format("`2Vending %d: Updated to %s (ID: %d)", vendIdx, itemName, itemID))
+                end
             end
         end
         
-        -- Set flag false dan tampilkan konfirmasi
-        isSelectingItems = false
-        show_confirmation_empty()
+        -- Jika ada buttonClicked (artinya user klik OK), lanjut ke konfirmasi
+        if hasButtonId then
+            isSelectingItems = false
+            show_confirmation_empty()
+        else
+            -- Jika tidak (user baru pilih item), re-show dialog item picker dengan update
+            show_item_picker_for_empty()
+        end
+        
         return true
     end
     
@@ -623,5 +635,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.5")
+LogToConsole("`2Vending Machine Tools v1.5 - FIXED Item Selection Loaded!")
 LogToConsole("`9Type /start to open menu")
