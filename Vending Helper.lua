@@ -1,5 +1,5 @@
 -- ========================================
--- VENDING MACHINE TOOLS v1.4
+-- VENDING MACHINE TOOLS v1.4 - FIXED
 -- ========================================
 
 -- Global Variables
@@ -373,9 +373,60 @@ add_spacer|small|
     end
     
     dialog = dialog .. [[
-add_textbox|`oClick item picker to select, then click OK to apply all|left|
+add_textbox|`oClick item picker to select items, then click Apply to proceed|left|
 add_quick_exit||
-end_dialog|apply_item_empty|Cancel|OK|
+end_dialog|apply_item_empty|Cancel|Apply|
+]]
+    
+    SendVariant({
+        v1 = "OnDialogRequest",
+        v2 = dialog
+    })
+end
+
+function show_confirmation_empty()
+    local dialog = [[
+add_label_with_icon|big|`9Confirm Items - Empty Vending|left|9270|
+add_textbox|`wReview your selection before applying:|left|
+add_spacer|small|
+]]
+    
+    local hasAllItems = true
+    
+    for idx, vendIdx in ipairs(selectedVendings) do
+        local vend = vendingList[vendIdx]
+        local itemID = selectedItems[vendIdx]
+        
+        if vend then
+            local itemText = "`4No item selected"
+            if itemID and itemID > 0 then
+                local itemInfo = getItemInfoByID(itemID)
+                local itemName = itemInfo and itemInfo.name or "Unknown"
+                itemText = string.format("`2%s `9(ID: `e%d`9)", itemName, itemID)
+            else
+                hasAllItems = false
+            end
+            
+            dialog = dialog .. string.format(
+                "add_textbox|`w%d. Vending `9(%d,%d) `w-> %s|left|\n",
+                idx,
+                vend.position.x,
+                vend.position.y,
+                itemText
+            )
+        end
+    end
+    
+    dialog = dialog .. "add_spacer|small|\n"
+    
+    if not hasAllItems then
+        dialog = dialog .. "add_textbox|`4Warning: Some vendings have no item selected!|left|\n"
+    end
+    
+    dialog = dialog .. [[
+add_textbox|`oClick Confirm to apply all items to vending machines|left|
+add_quick_exit||
+end_dialog|confirm_item_empty|Back|Confirm|
 ]]
     
     SendVariant({
@@ -459,7 +510,7 @@ addHook(function(packetType, packet)
         return true
     end
     
-    -- HANDLER BARU: Save item selection dan reopen dialog
+    -- HANDLER: Save item selection dan tampilkan konfirmasi
     if packet:find("apply_item_empty") then
         -- Save semua item yang dipilih
         for _, vendIdx in ipairs(selectedVendings) do
@@ -474,23 +525,13 @@ addHook(function(packetType, packet)
             end
         end
         
-        -- Reopen dialog untuk menampilkan pilihan
-        show_item_picker_for_empty()
+        -- Tampilkan dialog konfirmasi
+        show_confirmation_empty()
         return true
     end
     
-    -- HANDLER BARU: Konfirmasi final dan kirim ke server
+    -- HANDLER: Konfirmasi final dan kirim ke server
     if packet:find("confirm_item_empty") then
-        -- Update item selection terakhir kali
-        for _, vendIdx in ipairs(selectedVendings) do
-            local itemIDStr = packet:match("item_" .. vendIdx .. "|(%d+)")
-            local itemID = tonumber(itemIDStr)
-            
-            if itemID and itemID > 0 then
-                selectedItems[vendIdx] = itemID
-            end
-        end
-        
         -- Proses pengiriman ke server
         local totalSelected = #selectedVendings
         local successCount = 0
@@ -578,5 +619,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.4 Loaded!")
+LogToConsole("`2Vending Machine Tools v1.4 - FIXED Loaded!")
 LogToConsole("`9Type /start to open menu")
