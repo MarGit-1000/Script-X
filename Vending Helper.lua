@@ -7,6 +7,7 @@ local vendingList = {}
 local totalVending = 0
 local selectedVendings = {}
 local selectedItems = {} -- Storage untuk item yang dipilih
+local isSelectingItems = false -- Flag untuk mencegah auto-trigger
 
 -- ========================================
 -- UTILITY FUNCTIONS
@@ -373,9 +374,9 @@ add_spacer|small|
     end
     
     dialog = dialog .. [[
-add_textbox|`oClick item picker to select items, then click Apply to proceed|left|
+add_textbox|`oClick OK to save selections. Click item picker to change.|left|
 add_quick_exit||
-end_dialog|apply_item_empty|Cancel|Apply|
+end_dialog|save_item_selection|Cancel|OK|
 ]]
     
     SendVariant({
@@ -490,6 +491,7 @@ addHook(function(packetType, packet)
     if packet:find("select_empty") then
         selectedVendings = {}
         selectedItems = {} -- Reset selected items
+        isSelectingItems = true -- Set flag
         
         for i = 1, totalVending do
             if packet:find("vending_empty_" .. i .. "|1") then
@@ -506,12 +508,13 @@ addHook(function(packetType, packet)
             show_item_picker_for_empty()
         else
             LogToConsole("`4No vending selected!")
+            isSelectingItems = false
         end
         return true
     end
     
-    -- HANDLER: Save item selection dan tampilkan konfirmasi
-    if packet:find("apply_item_empty") then
+    -- HANDLER: Save item selection (dialog name berbeda!)
+    if packet:find("save_item_selection") and isSelectingItems then
         -- Save semua item yang dipilih
         for _, vendIdx in ipairs(selectedVendings) do
             local itemIDStr = packet:match("item_" .. vendIdx .. "|(%d+)")
@@ -525,7 +528,8 @@ addHook(function(packetType, packet)
             end
         end
         
-        -- Tampilkan dialog konfirmasi
+        -- Set flag false dan tampilkan konfirmasi
+        isSelectingItems = false
         show_confirmation_empty()
         return true
     end
@@ -619,5 +623,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.4 - FIXED Loaded!")
+LogToConsole("`2Vending Machine Tools v1.4 - FIXED Loaded!2")
 LogToConsole("`9Type /start to open menu")
