@@ -97,14 +97,14 @@ end
 
 -- Fungsi utama untuk menghancurkan semua block sesuai prioritas
 local function destroyAllBlocks()
-    print("Memulai proses penghancuran block...")
+    LogToConsole("Memulai proses penghancuran block...")
     
     -- Loop sampai semua block selesai
     for _, priority in ipairs(blockPriority) do
         local blockId = priority.id
         local blockName = priority.name
         
-        print("Memproses: " .. blockName .. " (ID: " .. blockId .. ")")
+        LogToConsole("Memproses: " .. blockName .. " (ID: " .. blockId .. ")")
         
         local continueScanning = true
         
@@ -114,7 +114,7 @@ local function destroyAllBlocks()
             
             -- Cek apakah masih ada block dengan ID ini
             if not blocks[blockId] or #blocks[blockId] == 0 then
-                print(blockName .. " selesai!")
+                LogToConsole(blockName .. " selesai!")
                 continueScanning = false
             else
                 -- Ambil block pertama dari list (x dan y terkecil)
@@ -122,21 +122,21 @@ local function destroyAllBlocks()
                 local x = targetBlock.x
                 local y = targetBlock.y
                 
-                print("Menghancurkan " .. blockName .. " di (" .. x .. ", " .. y .. ")")
+                LogToConsole("Menghancurkan " .. blockName .. " di (" .. x .. ", " .. y .. ")")
                 
                 -- Coba pindah ke dekat block
                 local moved = moveNearBlock(x, y)
                 
                 -- Punch block
                 punch(x, y)
-                sleep(200) -- Delay setelah punch untuk memastikan block hancur
+                sleep(50) -- Delay setelah punch untuk memastikan block hancur
             end
         end
     end
     
-    print("Semua block telah dihancurkan!")
+    LogToConsole("Semua block telah dihancurkan!")
 end
 
 -- Jalankan fungsi utama
-LogToConsole("versi 1.0.1")
+LogToConsole("versi 1.0.2")
 destroyAllBlocks()
