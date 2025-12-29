@@ -12,15 +12,15 @@ local blockPriority = {
     {id = 612, name = "Lattice Background", priority = 10}
 }
 
--- Fungsi untuk punch block (FG atau BG)
-local function punch(x, y, isBackground)
+-- Fungsi untuk punch block
+local function punch(x, y)
     local d = {
         x = x * 32,
         y = y * 32,
         px = x,
         py = y,
         type = 3,
-        value = isBackground and 82 or 18, -- 82 untuk BG, 18 untuk FG
+        value = 18,
     }
     SendPacketRaw(false, d)
     Sleep(10)
@@ -185,7 +185,7 @@ function processBlockType(blockId, blockName, isBackground)
             if isInPunchRange(x, y) then
                 LogToConsole("Block sudah dalam jangkauan!")
                 if isBlockExists(x, y, blockId, isBackground) then
-                    punch(x, y, isBackground)
+                    punch(x, y)
                     Sleep(100)
                     failCount = 0
                 end
@@ -194,7 +194,7 @@ function processBlockType(blockId, blockName, isBackground)
                 
                 if moved then
                     if isBlockExists(x, y, blockId, isBackground) then
-                        punch(x, y, isBackground)
+                        punch(x, y)
                         Sleep(10)
                         failCount = 0
                     else
@@ -204,7 +204,7 @@ function processBlockType(blockId, blockName, isBackground)
                     LogToConsole("Gagal pindah, coba punch dari posisi sekarang...")
                     
                     if isBlockExists(x, y, blockId, isBackground) then
-                        punch(x, y, isBackground)
+                        punch(x, y)
                         Sleep(10)
                     end
                     
@@ -225,5 +225,5 @@ function processBlockType(blockId, blockName, isBackground)
 end
 
 -- Jalankan fungsi utama
-LogToConsole("versi 1.1.1 - Auto punch FG & BG blocks")
+LogToConsole("versi 1.1.2 - Auto punch FG & BG (simplified)")
 destroyAllBlocks()
