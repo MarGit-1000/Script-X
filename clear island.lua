@@ -224,5 +224,5 @@ function processBlockType(blockId, blockName, isBackground)
 end
 
 -- Jalankan fungsi utama
-LogToConsole("versi 1.1.3 - Auto punch FG & BG (simplified)")
+LogToConsole("versi 1.1.4 - Auto punch FG & BG (simplified)")
 destroyAllBlocks()
