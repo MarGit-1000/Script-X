@@ -23,20 +23,17 @@ local function punch(x, y)
         value = 18,
     }
     SendPacketRaw(false, d)
-    Sleep(20) -- Delay kecil setelah punch
+    Sleep(10)
 end
 
 -- Fungsi untuk scan world dan mengelompokkan block berdasarkan ID
 local function scanWorld()
-    local maxX = 99
-    local maxY = 113
     local blocks = {}
     
     for _, block in pairs(GetTiles()) do
-        if block.fg ~= 0 then -- Hanya ambil block yang ada (tidak kosong)
-            local blockId = block.fg or block.bg
+        if block.fg ~= 0 then
+            local blockId = block.fg
             
-            -- Cek apakah block ini ada di priority list
             for _, priority in ipairs(blockPriority) do
                 if priority.id == blockId then
                     if not blocks[blockId] then
@@ -67,40 +64,66 @@ local function scanWorld()
     return blocks
 end
 
--- Fungsi untuk mencoba pindah ke dekat block
+-- Fungsi untuk cek jarak ke block
+local function getDistance(x1, y1, x2, y2)
+    return math.abs(x1 - x2) + math.abs(y1 - y2)
+end
+
+-- Fungsi untuk cek apakah block dalam jangkauan punch
+local function isInPunchRange(x, y)
+    local botX = math.floor(GetLocal().pos.x / 32)
+    local botY = math.floor(GetLocal().pos.y / 32)
+    local distance = getDistance(botX, botY, x, y)
+    return distance <= 5 -- Jangkauan punch biasanya 5 tile
+end
+
+-- Fungsi untuk mencoba pindah ke dekat block (DIPERBAIKI)
 local function moveNearBlock(x, y)
-    -- Coba y+1 (atas)
-    if findPath(x, y + 1) then
-        --Sleep(20)
+    -- Cek apakah sudah dalam jangkauan
+    if isInPunchRange(x, y) then
+        LogToConsole("Sudah dalam jangkauan, tidak perlu pindah")
         return true
     end
     
-    -- Coba y-1 (bawah)
-    if findPath(x, y - 1) then
-       -- Sleep(20)
-        return true
+    local positions = {
+        {x = x, y = y + 1},     -- Atas
+        {x = x, y = y - 1},     -- Bawah
+        {x = x - 1, y = y},     -- Kiri
+        {x = x + 1, y = y},     -- Kanan
+        {x = x - 1, y = y + 1}, -- Kiri atas
+        {x = x + 1, y = y + 1}, -- Kanan atas
+        {x = x - 1, y = y - 1}, -- Kiri bawah
+        {x = x + 1, y = y - 1}, -- Kanan bawah
+    }
+    
+    -- Coba setiap posisi
+    for _, pos in ipairs(positions) do
+        if findPath(pos.x, pos.y) then
+            Sleep(10) -- Beri waktu bot untuk sampai
+            
+            -- Verifikasi posisi bot sudah dalam jangkauan
+            if isInPunchRange(x, y) then
+                return true
+            end
+            
+            Sleep(10)
+        end
     end
     
-    -- Coba x-1 (kiri)
-    if findPath(x - 1, y) then
-       -- Sleep(20)
-        return true
-    end
-    
-    -- Coba x+1 (kanan)
-    if findPath(x + 1, y) then
-        --Sleep(20)
-        return true
-    end
-    
-    return false -- Gagal pindah
+    return false
+end
+
+-- Fungsi untuk cek apakah block masih ada
+local function isBlockExists(x, y, blockId)
+    local tile = GetTile(x, y)
+    if not tile then return false end
+    return tile.fg == blockId
 end
 
 -- Fungsi utama untuk menghancurkan semua block sesuai prioritas
 local function destroyAllBlocks()
     LogToConsole("Memulai proses penghancuran block...")
     
-    -- Loop sampai semua block selesai
     for _, priority in ipairs(blockPriority) do
         local blockId = priority.id
         local blockName = priority.name
@@ -108,6 +131,7 @@ local function destroyAllBlocks()
         LogToConsole("Memproses: " .. blockName .. " (ID: " .. blockId .. ")")
         
         local continueScanning = true
+        local failCount = 0
         
         while continueScanning do
             -- Scan ulang world
@@ -118,18 +142,55 @@ local function destroyAllBlocks()
                 LogToConsole(blockName .. " selesai!")
                 continueScanning = false
             else
-                -- Ambil block pertama dari list (x dan y terkecil)
+                -- Ambil block pertama dari list
                 local targetBlock = blocks[blockId][1]
                 local x = targetBlock.x
                 local y = targetBlock.y
-    
                 
-                -- Coba pindah ke dekat block
-                local moved = moveNearBlock(x, y)
+                -- Cek apakah sudah dalam jangkauan tanpa perlu pindah
+                if isInPunchRange(x, y) then
+                    LogToConsole("Block sudah dalam jangkauan!")
+                    if isBlockExists(x, y, blockId) then
+                        punch(x, y)
+                        (100)
+                        failCount = 0
+                    end
+                else
+                    -- Coba pindah ke dekat block
+                    local moved = moveNearBlock(x, y)
+                    
+                    if moved then
+                        -- Berhasil pindah, verifikasi block masih ada
+                        if isBlockExists(x, y, blockId) then
+                            punch(x, y)
+                            Sleep(10)
+                            failCount = 0
+                        else
+                            LogToConsole("Block sudah tidak ada, skip...")
+                        end
+                    else
+                        -- GAGAL PINDAH - Tetap coba punch dari posisi sekarang
+                        LogToConsole("Gagal pindah, coba punch dari posisi sekarang...")
+                        
+                        if isBlockExists(x, y, blockId) then
+                            punch(x, y)
+                            Sleep(10) -- Delay lebih lama karena mungkin diluar jangkauan optimal
+                        end
+                        
+                        failCount = failCount + 1
+                        
+                        -- Jika gagal 5x berturut-turut, skip block ini
+                        if failCount >= 5 then
+                            LogToConsole("Skip block setelah 5x gagal punch dari posisi jauh")
+                            Sleep(10)
+                            failCount = 0
+                            -- Hapus block dari list agar tidak stuck
+                            table.remove(blocks[blockId], 1)
+                        end
+                    end
+                end
                 
-                -- Punch block
-                punch(x, y)
-                Sleep(20) -- Delay setelah punch untuk memastikan block hancur
+                Sleep(10) -- Delay antar iterasi
             end
         end
     end
@@ -138,5 +199,5 @@ local function destroyAllBlocks()
 end
 
 -- Jalankan fungsi utama
-LogToConsole("versi 1.0.5")
+LogToConsole("versi 1.0.9 - Auto punch even if move fails")
 destroyAllBlocks()
