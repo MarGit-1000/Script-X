@@ -68,14 +68,14 @@ end
 
 -- Fungsi untuk mencoba pindah ke dekat block
 local function moveNearBlock(x, y)
-    -- Coba y-1 (bawah)
-    if findPath(x, y - 1) then
+    -- Coba y+1 (atas)
+    if findPath(x, y + 1) then
         Sleep(20)
         return true
     end
     
-    -- Coba y+1 (atas)
-    if findPath(x, y + 1) then
+    -- Coba y-1 (bawah)
+    if findPath(x, y - 1) then
         Sleep(20)
         return true
     end
@@ -137,5 +137,5 @@ local function destroyAllBlocks()
 end
 
 -- Jalankan fungsi utama
-LogToConsole("versi 1.0.3")
+LogToConsole("versi 1.0.4")
 destroyAllBlocks()
