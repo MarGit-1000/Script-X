@@ -22,7 +22,7 @@ local function punch(x, y)
         value = 18,
     }
     SendPacketRaw(false, d)
-    sleep(100) -- Delay kecil setelah punch
+    sleep(50) -- Delay kecil setelah punch
 end
 
 -- Fungsi untuk scan world dan mengelompokkan block berdasarkan ID
@@ -70,25 +70,25 @@ end
 local function moveNearBlock(x, y)
     -- Coba y-1 (bawah)
     if findPath(x, y - 1) then
-        sleep(100)
+        Sleep(50)
         return true
     end
     
     -- Coba y+1 (atas)
     if findPath(x, y + 1) then
-        sleep(100)
+        Sleep(50)
         return true
     end
     
     -- Coba x-1 (kiri)
     if findPath(x - 1, y) then
-        sleep(100)
+        Sleep(50)
         return true
     end
     
     -- Coba x+1 (kanan)
     if findPath(x + 1, y) then
-        sleep(100)
+        Sleep(50)
         return true
     end
     
