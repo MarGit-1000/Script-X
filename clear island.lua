@@ -34,7 +34,7 @@ local function scanWorld()
     
     for _, block in pairs(GetTiles()) do
         if block.fg ~= 0 then -- Hanya ambil block yang ada (tidak kosong)
-            local blockId = block.fg
+            local blockId = block.fg or block.bg
             
             -- Cek apakah block ini ada di priority list
             for _, priority in ipairs(blockPriority) do
