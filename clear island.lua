@@ -4,11 +4,12 @@ local blockPriority = {
     {id = 1004, name = "Hedge", priority = 2},
     {id = 1104, name = "Foliage", priority = 3},
     {id = 7224, name = "Oak Tree", priority = 4},
-    {id = 190, name = "Rose", priority = 5},
-    {id = 2, name = "Dirt", priority = 6},
-    {id = 728, name = "Clouds", priority = 7},
-    {id = 3564, name = "Cave Dirt", priority = 8},
-    {id = 612, name = "Lattice Background", priority = 9}
+    {id = 1102, name = "Sequoia Tree", priority = 5},
+    {id = 190, name = "Rose", priority = 6},
+    {id = 2, name = "Dirt", priority = 7},
+    {id = 728, name = "Clouds", priority = 8},
+    {id = 3564, name = "Cave Dirt", priority = 9},
+    {id = 612, name = "Lattice Background", priority = 10}
 }
 
 -- Fungsi untuk punch block
@@ -70,25 +71,25 @@ end
 local function moveNearBlock(x, y)
     -- Coba y+1 (atas)
     if findPath(x, y + 1) then
-        Sleep(20)
+        --Sleep(20)
         return true
     end
     
     -- Coba y-1 (bawah)
     if findPath(x, y - 1) then
-        Sleep(20)
+       -- Sleep(20)
         return true
     end
     
     -- Coba x-1 (kiri)
     if findPath(x - 1, y) then
-        Sleep(20)
+       -- Sleep(20)
         return true
     end
     
     -- Coba x+1 (kanan)
     if findPath(x + 1, y) then
-        Sleep(20)
+        --Sleep(20)
         return true
     end
     
