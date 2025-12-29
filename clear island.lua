@@ -105,7 +105,6 @@ end
 -- Fungsi untuk mencoba pindah ke dekat block
 local function moveNearBlock(x, y)
     if isInPunchRange(x, y) then
-        LogToConsole("Sudah dalam jangkauan, tidak perlu pindah")
         return true
     end
     
@@ -183,7 +182,7 @@ function processBlockType(blockId, blockName, isBackground)
             local y = targetBlock.y
             
             if isInPunchRange(x, y) then
-                LogToConsole("Block sudah dalam jangkauan!")
+
                 if isBlockExists(x, y, blockId, isBackground) then
                     punch(x, y)
                     Sleep(100)
@@ -201,7 +200,7 @@ function processBlockType(blockId, blockName, isBackground)
                         LogToConsole("Block sudah tidak ada, skip...")
                     end
                 else
-                    LogToConsole("Gagal pindah, coba punch dari posisi sekarang...")
+
                     
                     if isBlockExists(x, y, blockId, isBackground) then
                         punch(x, y)
@@ -211,7 +210,7 @@ function processBlockType(blockId, blockName, isBackground)
                     failCount = failCount + 1
                     
                     if failCount >= 5 then
-                        LogToConsole("Skip block setelah 5x gagal punch dari posisi jauh")
+     
                         Sleep(10)
                         failCount = 0
                         table.remove(blocks[key], 1)
@@ -225,5 +224,5 @@ function processBlockType(blockId, blockName, isBackground)
 end
 
 -- Jalankan fungsi utama
-LogToConsole("versi 1.1.2 - Auto punch FG & BG (simplified)")
+LogToConsole("versi 1.1.3 - Auto punch FG & BG (simplified)")
 destroyAllBlocks()
