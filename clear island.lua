@@ -138,5 +138,5 @@ local function destroyAllBlocks()
 end
 
 -- Jalankan fungsi utama
-LogToConsole("versi 1.0.4")
+LogToConsole("versi 1.0.5")
 destroyAllBlocks()
