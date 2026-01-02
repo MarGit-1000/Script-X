@@ -1,5 +1,5 @@
 -- ========================================
--- VENDING MACHINE TOOLS v1.6 - COUNTER SYSTEM
+-- VENDING MACHINE TOOLS v1.7 - NO MAX LIMIT
 -- ========================================
 
 -- Global Variables
@@ -136,7 +136,7 @@ function show_edit_price()
     
     local dialog = [[
 add_label_with_icon|big|`9Edit Price Vending|left|9270|
-add_textbox|`wSelect Vending (`4MAX 10 SELECT`w)|left|
+add_textbox|`wSelect Vending|left|
 add_spacer|small|
 ]]
     
@@ -300,7 +300,7 @@ function show_empty_vending()
     
     local dialog = [[
 add_label_with_icon|big|`9Edit Empty Vending|left|9270|
-add_textbox|`wSelect Empty Vending (`4MAX 10 SELECT`w)|left|
+add_textbox|`wSelect Empty Vending|left|
 add_spacer|small|
 ]]
     
@@ -470,10 +470,6 @@ addHook(function(packetType, packet)
         for i = 1, totalVending do
             if packet:find("vending_" .. i .. "|1") then
                 table.insert(selectedVendings, i)
-                if #selectedVendings >= 10 then
-                    LogToConsole("`4Maximum 10 vendings selected!")
-                    break
-                end
             end
         end
         
@@ -506,10 +502,6 @@ addHook(function(packetType, packet)
         for i = 1, totalVending do
             if packet:find("vending_empty_" .. i .. "|1") then
                 table.insert(selectedVendings, i)
-                if #selectedVendings >= 10 then
-                    LogToConsole("`4Maximum 10 vendings selected!")
-                    break
-                end
             end
         end
         
@@ -552,8 +544,8 @@ addHook(function(packetType, packet)
         
         -- Increment counter hanya jika ada selection baru dan bukan dari button OK
         -- SETIAP packet item_picker_empty dihitung
-            itemSelectionCount = itemSelectionCount + 1
-            LogToConsole(string.format("`9Selection count: %d/%d", itemSelectionCount, maxSelectionCount))
+        itemSelectionCount = itemSelectionCount + 1
+        LogToConsole(string.format("`9Selection count: %d/%d", itemSelectionCount, maxSelectionCount))
 
         
         -- Jika counter sudah mencapai batas atau user klik OK, lanjut ke konfirmasi
@@ -661,5 +653,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.666 - Counter System Loaded!")
+LogToConsole("`2Vending Machine Tools v1.7 - No Max Limit Loaded!")
 LogToConsole("`9Type /start to open menu")
