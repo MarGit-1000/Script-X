@@ -23,7 +23,7 @@ local function punch(x, y)
         value = 18,
     }
     SendPacketRaw(false, d)
-    Sleep(5)
+    Sleep(30)
 end
 
 -- Fungsi untuk scan world dan mengelompokkan block berdasarkan ID
@@ -121,11 +121,11 @@ local function moveNearBlock(x, y)
     
     for _, pos in ipairs(positions) do
         if findPath(pos.x, pos.y) then
-            Sleep(5)
+            Sleep(30)
             if isInPunchRange(x, y) then
                 return true
             end
-            Sleep(5)
+            Sleep(30)
         end
     end
     
@@ -194,7 +194,7 @@ function processBlockType(blockId, blockName, isBackground)
                 if moved then
                     if isBlockExists(x, y, blockId, isBackground) then
                         punch(x, y)
-                        Sleep(5)
+                        Sleep(30)
                         failCount = 0
                     else
                         LogToConsole("Block sudah tidak ada, skip...")
@@ -204,21 +204,21 @@ function processBlockType(blockId, blockName, isBackground)
                     
                     if isBlockExists(x, y, blockId, isBackground) then
                         punch(x, y)
-                        Sleep(5)
+                        Sleep(30)
                     end
                     
                     failCount = failCount + 1
                     
                     if failCount >= 5 then
      
-                        Sleep(5)
+                        Sleep(30)
                         failCount = 0
                         table.remove(blocks[key], 1)
                     end
                 end
             end
             
-            Sleep(5)
+            Sleep(30)
         end
     end
 end
