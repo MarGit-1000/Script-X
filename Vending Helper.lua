@@ -446,6 +446,96 @@ end_dialog|confirm_item_empty|Back|Confirm|
 end
 
 -- ========================================
+-- FEATURE 3: DISABLE VENDING
+-- ========================================
+
+function show_disable_vending()
+    if not scanVendingMachines() then return end
+    
+    local dialog = [[
+add_label_with_icon|big|`9Disable Vending|left|9270|
+add_textbox|`wSelect Vending to Disable|left|
+add_spacer|small|
+]]
+    
+    if totalVending == 0 then
+        dialog = dialog .. "add_textbox|`4No vending machines found!|left|\n"
+    else
+        for i, vend in ipairs(vendingList) do
+            if vend and vend.position and vend.position.x and vend.position.y then
+                local displayText = string.format(
+                    "`wVending (%d,%d) - %s",
+                    vend.position.x,
+                    vend.position.y,
+                    vend.vendItem > 0 and vend.vendItemName or "Empty"
+                )
+                
+                dialog = dialog .. string.format(
+                    "add_checkicon|vending_disable_%d|%s||%d||0|\n",
+                    i,
+                    displayText,
+                    vend.vendItem > 0 and vend.vendItem or 2
+                )
+            end
+        end
+    end
+    
+    dialog = dialog .. [[
+add_quick_exit||
+end_dialog|apply_disable|Cancel|OK|
+]]
+    
+    SendVariant({
+        v1 = "OnDialogRequest",
+        v2 = dialog
+    })
+end
+
+local function applyDisableVending()
+    local totalSelected = #selectedVendings
+    local successCount = 0
+    local failCount = 0
+    
+    LogToConsole("`9========== DISABLING VENDING ==========")
+    LogToConsole(string.format("`9Starting to disable %d vending(s)...", totalSelected))
+    
+    for _, vendIdx in ipairs(selectedVendings) do
+        local vend = vendingList[vendIdx]
+        
+        if vend and vend.position then
+            successCount = successCount + 1
+            
+            LogToConsole(string.format(
+                "`9[%d/%d] `2Disabling vending at (%d,%d)",
+                successCount,
+                totalSelected,
+                vend.position.x,
+                vend.position.y
+            ))
+            
+            -- Format packet untuk disable (set price = 0, peritem = 1, perlock = 0)
+            local packetData = string.format(
+                "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nsetprice|0\nchk_peritem|1\nchk_perlock|0\n",
+                vend.position.x,
+                vend.position.y
+            )
+            
+            SendPacket(2, packetData)
+            Sleep(100)
+        else
+            failCount = failCount + 1
+            LogToConsole("`4Invalid vending data at index " .. vendIdx)
+        end
+    end
+    
+    LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
+    LogToConsole("`9=======================================")
+    
+    -- Clear selection
+    selectedVendings = {}
+end
+
+-- ========================================
 -- PACKET HOOK HANDLER
 -- ========================================
 
@@ -625,9 +715,27 @@ addHook(function(packetType, packet)
         return true
     end
     
-    -- Feature 3: Enable/Disable Vending (TODO)
+    -- Feature 3: Disable Vending
     if packet:find("disable_vending") then
-        LogToConsole("`4Feature not implemented yet!")
+        show_disable_vending()
+        return true
+    end
+    
+    if packet:find("apply_disable") then
+        selectedVendings = {}
+        
+        for i = 1, totalVending do
+            if packet:find("vending_disable_" .. i .. "|1") then
+                table.insert(selectedVendings, i)
+            end
+        end
+        
+        if #selectedVendings > 0 then
+            LogToConsole(string.format("`2Selected %d vending(s) to disable", #selectedVendings))
+            applyDisableVending()
+        else
+            LogToConsole("`4No vending selected!")
+        end
         return true
     end
     
@@ -653,5 +761,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.7 - No Max Limit Loaded!")
+LogToConsole("`2Vending Machine Tools v1.8 - FIX DISABLE!")
 LogToConsole("`9Type /start to open menu")
