@@ -452,27 +452,42 @@ end
 function show_disable_vending()
     if not scanVendingMachines() then return end
     
+    -- Filter hanya vending yang punya price/harga (price > 0)
+    local activeVendings = {}
+    for i, vend in ipairs(vendingList) do
+        if vend.vendPrice > 0 then
+            table.insert(activeVendings, {
+                originalIndex = i,
+                vend = vend
+            })
+        end
+    end
+    
     local dialog = [[
 add_label_with_icon|big|`9Disable Vending|left|9270|
-add_textbox|`wSelect Vending to Disable|left|
+add_textbox|`wSelect Vending to Disable (Only Active Vending)|left|
 add_spacer|small|
 ]]
     
-    if totalVending == 0 then
-        dialog = dialog .. "add_textbox|`4No vending machines found!|left|\n"
+    if #activeVendings == 0 then
+        dialog = dialog .. "add_textbox|`4No active vending machines found!|left|\n"
     else
-        for i, vend in ipairs(vendingList) do
+        for i, data in ipairs(activeVendings) do
+            local vend = data.vend
+            local originalIdx = data.originalIndex
+            
             if vend and vend.position and vend.position.x and vend.position.y then
                 local displayText = string.format(
-                    "`wVending (%d,%d) - %s",
+                    "`wVending (%d,%d) - %s - `e%d WL",
                     vend.position.x,
                     vend.position.y,
-                    vend.vendItem > 0 and vend.vendItemName or "Empty"
+                    vend.vendItemName,
+                    vend.vendPrice
                 )
                 
                 dialog = dialog .. string.format(
                     "add_checkicon|vending_disable_%d|%s||%d||0|\n",
-                    i,
+                    originalIdx,
                     displayText,
                     vend.vendItem > 0 and vend.vendItem or 2
                 )
@@ -761,5 +776,5 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.8 - FIX DISABLE!")
+LogToConsole("`2Vending Machine Tools v1.9 - FIXING!")
 LogToConsole("`9Type /start to open menu")
