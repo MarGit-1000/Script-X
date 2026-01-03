@@ -274,7 +274,7 @@ local function applyPriceChanges(packet)
                 )
                 
                 SendPacket(2, packetData)
-                Sleep(100) -- Delay 100ms per proses
+                Sleep(500) -- Delay 100ms per proses
             else
                 failCount = failCount + 1
                 LogToConsole("`4Invalid vending data at index " .. vendIdx)
@@ -551,7 +551,7 @@ local function applyDisableVending()
             )
             
             SendPacket(2, packetData)
-            Sleep(100)
+            Sleep(500)
         else
             failCount = failCount + 1
             LogToConsole("`4Invalid vending data at index " .. vendIdx)
@@ -722,7 +722,7 @@ addHook(function(packetType, packet)
                     )
                     
                     SendPacket(2, packetData)
-                    Sleep(150)
+                    Sleep(500)
                 else
                     failCount = failCount + 1
                     LogToConsole("`4Invalid vending data at index " .. vendIdx)
