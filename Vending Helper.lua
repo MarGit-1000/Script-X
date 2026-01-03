@@ -232,67 +232,74 @@ end_dialog|apply_price|Cancel|OK|
 end
 
 local function applyPriceChanges(packet)
-    local totalSelected = #selectedVendings
-    local processCount = 0
-    local failCount = 0
-    
-    for _, vendIdx in ipairs(selectedVendings) do
-        local pricePattern = "price_vending_" .. vendIdx .. "|([^|\n]+)"
-        local newPriceStr = packet:match(pricePattern)
-        local newPrice = tonumber(newPriceStr)
-        local perWorldLock = packet:find("per_world_" .. vendIdx .. "|1") ~= nil
+    runThread(function()
+        LogToConsole("`eWaiting 5 sec before starting...")
+        Sleep(5000)
         
-        if newPrice and newPrice > 0 then
-            local vend = vendingList[vendIdx]
+        local totalSelected = #selectedVendings
+        local processCount = 0
+        local failCount = 0
+        
+        LogToConsole("`9========== STARTING PRICE UPDATE ==========")
+        
+        for _, vendIdx in ipairs(selectedVendings) do
+            local pricePattern = "price_vending_" .. vendIdx .. "|([^|\n]+)"
+            local newPriceStr = packet:match(pricePattern)
+            local newPrice = tonumber(newPriceStr)
+            local perWorldLock = packet:find("per_world_" .. vendIdx .. "|1") ~= nil
             
-            if vend and vend.position then
-                processCount = processCount + 1
+            if newPrice and newPrice > 0 then
+                local vend = vendingList[vendIdx]
                 
-                local priceLabel = perWorldLock and "Item" or "WL"
-                local modeLabel  = perWorldLock and "Per World Lock" or "Per Item"
+                if vend and vend.position then
+                    processCount = processCount + 1
+                    
+                    local priceLabel = perWorldLock and "Item" or "WL"
+                    local modeLabel  = perWorldLock and "Per World Lock" or "Per Item"
 
-                LogToConsole(string.format(
-                    "`9[%d/%d] `2Updating vending at (%d,%d): %s -> %d %s `o(%s)",
-                    processCount,
-                    totalSelected,
-                    vend.position.x,
-                    vend.position.y,
-                    vend.vendItemName,
-                    newPrice,
-                    priceLabel,
-                    modeLabel
-                ))
-                
-                -- Kirim packet untuk update vending
-                local packetData = string.format(
-                    "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nsetprice|%d\nchk_peritem|%d\nchk_perlock|%d\n",
-                    vend.position.x,
-                    vend.position.y,
-                    newPrice,
-                    perWorldLock and 0 or 1,
-                    perWorldLock and 1 or 0
-                )
-                
-                SendPacket(2, packetData)
-                Sleep(500) -- Delay 100ms per proses
+                    LogToConsole(string.format(
+                        "`9[%d/%d] `2Updating vending at (%d,%d): %s -> %d %s `o(%s)",
+                        processCount,
+                        totalSelected,
+                        vend.position.x,
+                        vend.position.y,
+                        vend.vendItemName,
+                        newPrice,
+                        priceLabel,
+                        modeLabel
+                    ))
+                    
+                    -- Kirim packet untuk update vending
+                    local packetData = string.format(
+                        "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nsetprice|%d\nchk_peritem|%d\nchk_perlock|%d\n",
+                        vend.position.x,
+                        vend.position.y,
+                        newPrice,
+                        perWorldLock and 0 or 1,
+                        perWorldLock and 1 or 0
+                    )
+                    
+                    SendPacket(2, packetData)
+                    Sleep(500)
+                else
+                    failCount = failCount + 1
+                    LogToConsole("`4Invalid vending data at index " .. vendIdx)
+                end
             else
                 failCount = failCount + 1
-                LogToConsole("`4Invalid vending data at index " .. vendIdx)
+                LogToConsole(string.format("`4Invalid price for vending %d: %s", vendIdx, newPriceStr or "nil"))
             end
-        else
-            failCount = failCount + 1
-            LogToConsole(string.format("`4Invalid price for vending %d: %s", vendIdx, newPriceStr or "nil"))
         end
-    end
-    
-    LogToConsole(string.format(
-        "`9[DONE] `2Success: %d | `4Failed: %d",
-        processCount,
-        failCount
-    ))
-    
-    -- Clear selection
-    selectedVendings = {}
+        
+        LogToConsole(string.format(
+            "`9[DONE] `2Success: %d | `4Failed: %d",
+            processCount,
+            failCount
+        ))
+        
+        -- Clear selection
+        selectedVendings = {}
+    end)
 end
 
 -- ========================================
@@ -460,6 +467,70 @@ end_dialog|confirm_item_empty|Back|Confirm|
     })
 end
 
+local function applyEmptyVending()
+    runThread(function()
+        LogToConsole("`eWaiting 5 sec before starting...")
+        Sleep(5000)
+        
+        local totalSelected = #selectedVendings
+        local successCount = 0
+        local failCount = 0
+        
+        LogToConsole("`9========== APPLYING ITEMS TO VENDING ==========")
+        LogToConsole(string.format("`9Starting to fill %d vending(s)...", totalSelected))
+        
+        for _, vendIdx in ipairs(selectedVendings) do
+            local itemID = selectedItems[vendIdx]
+            
+            if itemID and itemID > 0 then
+                local vend = vendingList[vendIdx]
+                
+                if vend and vend.position then
+                    successCount = successCount + 1
+                    
+                    local itemInfo = getItemInfoByID(itemID)
+                    local itemName = itemInfo and itemInfo.name or "Unknown"
+                    
+                    LogToConsole(string.format(
+                        "`9[%d/%d] `2Filling vending at (%d,%d) with `3%s `9(ID: `e%d`9)",
+                        successCount,
+                        totalSelected,
+                        vend.position.x,
+                        vend.position.y,
+                        itemName,
+                        itemID
+                    ))
+                    
+                    local packetData = string.format(
+                        "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nstockitem|%d\n",
+                        vend.position.x,
+                        vend.position.y,
+                        itemID
+                    )
+                    
+                    SendPacket(2, packetData)
+                    Sleep(500)
+                else
+                    failCount = failCount + 1
+                    LogToConsole("`4Invalid vending data at index " .. vendIdx)
+                end
+            else
+                failCount = failCount + 1
+                LogToConsole("`4No item selected for vending index " .. vendIdx)
+            end
+        end
+        
+        LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
+        LogToConsole("`9===============================================")
+        
+        -- Clear selections
+        selectedVendings = {}
+        selectedItems = {}
+        itemSelectionCount = 0
+        maxSelectionCount = 0
+    end)
+end
+
 -- ========================================
 -- FEATURE 3: DISABLE VENDING
 -- ========================================
@@ -522,47 +593,52 @@ end_dialog|apply_disable|Cancel|OK|
 end
 
 local function applyDisableVending()
-    local totalSelected = #selectedVendings
-    local successCount = 0
-    local failCount = 0
-    
-    LogToConsole("`9========== DISABLING VENDING ==========")
-    LogToConsole(string.format("`9Starting to disable %d vending(s)...", totalSelected))
-    
-    for _, vendIdx in ipairs(selectedVendings) do
-        local vend = vendingList[vendIdx]
+    runThread(function()
+        LogToConsole("`eWaiting 5 sec before starting...")
+        Sleep(5000)
         
-        if vend and vend.position then
-            successCount = successCount + 1
+        local totalSelected = #selectedVendings
+        local successCount = 0
+        local failCount = 0
+        
+        LogToConsole("`9========== DISABLING VENDING ==========")
+        LogToConsole(string.format("`9Starting to disable %d vending(s)...", totalSelected))
+        
+        for _, vendIdx in ipairs(selectedVendings) do
+            local vend = vendingList[vendIdx]
             
-            LogToConsole(string.format(
-                "`9[%d/%d] `2Disabling vending at (%d,%d)",
-                successCount,
-                totalSelected,
-                vend.position.x,
-                vend.position.y
-            ))
-            
-            -- Format packet untuk disable (set price = 0, peritem = 1, perlock = 0)
-            local packetData = string.format(
-                "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nsetprice|0\nchk_peritem|1\nchk_perlock|0\n",
-                vend.position.x,
-                vend.position.y
-            )
-            
-            SendPacket(2, packetData)
-            Sleep(500)
-        else
-            failCount = failCount + 1
-            LogToConsole("`4Invalid vending data at index " .. vendIdx)
+            if vend and vend.position then
+                successCount = successCount + 1
+                
+                LogToConsole(string.format(
+                    "`9[%d/%d] `2Disabling vending at (%d,%d)",
+                    successCount,
+                    totalSelected,
+                    vend.position.x,
+                    vend.position.y
+                ))
+                
+                -- Format packet untuk disable (set price = 0, peritem = 1, perlock = 0)
+                local packetData = string.format(
+                    "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nsetprice|0\nchk_peritem|1\nchk_perlock|0\n",
+                    vend.position.x,
+                    vend.position.y
+                )
+                
+                SendPacket(2, packetData)
+                Sleep(500)
+            else
+                failCount = failCount + 1
+                LogToConsole("`4Invalid vending data at index " .. vendIdx)
+            end
         end
-    end
-    
-    LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
-    LogToConsole("`9=======================================")
-    
-    -- Clear selection
-    selectedVendings = {}
+        
+        LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
+        LogToConsole("`9=======================================")
+        
+        -- Clear selection
+        selectedVendings = {}
+    end)
 end
 
 -- ========================================
@@ -684,64 +760,7 @@ addHook(function(packetType, packet)
     
     -- HANDLER: Konfirmasi final dan kirim ke server
     if packet:find("confirm_item_empty") then
-        -- Proses pengiriman ke server
-        local totalSelected = #selectedVendings
-        local successCount = 0
-        local failCount = 0
-        
-        LogToConsole("`9========== APPLYING ITEMS TO VENDING ==========")
-        LogToConsole(string.format("`9Starting to fill %d vending(s)...", totalSelected))
-        
-        for _, vendIdx in ipairs(selectedVendings) do
-            local itemID = selectedItems[vendIdx]
-            
-            if itemID and itemID > 0 then
-                local vend = vendingList[vendIdx]
-                
-                if vend and vend.position then
-                    successCount = successCount + 1
-                    
-                    local itemInfo = getItemInfoByID(itemID)
-                    local itemName = itemInfo and itemInfo.name or "Unknown"
-                    
-                    LogToConsole(string.format(
-                        "`9[%d/%d] `2Filling vending at (%d,%d) with `3%s `9(ID: `e%d`9)",
-                        successCount,
-                        totalSelected,
-                        vend.position.x,
-                        vend.position.y,
-                        itemName,
-                        itemID
-                    ))
-                    
-                    local packetData = string.format(
-                        "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nstockitem|%d\n",
-                        vend.position.x,
-                        vend.position.y,
-                        itemID
-                    )
-                    
-                    SendPacket(2, packetData)
-                    Sleep(500)
-                else
-                    failCount = failCount + 1
-                    LogToConsole("`4Invalid vending data at index " .. vendIdx)
-                end
-            else
-                failCount = failCount + 1
-                LogToConsole("`4No item selected for vending index " .. vendIdx)
-            end
-        end
-        
-        LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
-        LogToConsole("`9===============================================")
-        
-        -- Clear selections
-        selectedVendings = {}
-        selectedItems = {}
-        itemSelectionCount = 0
-        maxSelectionCount = 0
-        
+        applyEmptyVending()
         return true
     end
     
@@ -792,5 +811,5 @@ addHook(function(packetType, packet)
 end, "OnSendPacket")
 
 watermark()
-LogToConsole("`2Vending Machine Tools v1 [X-SCRIPT]")
+LogToConsole("`2Vending Machine Tools v1.7 [X-SCRIPT]")
 LogToConsole("`9Type /start to open menu")
