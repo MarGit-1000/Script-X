@@ -792,5 +792,5 @@ addHook(function(packetType, packet)
 end, "OnSendPacket")
 
 watermark()
-LogToConsole("`2Vending Machine Tools v1")
+LogToConsole("`2Vending Machine Tools v1.1")
 LogToConsole("`9Type /start to open menu")
