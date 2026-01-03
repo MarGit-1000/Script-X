@@ -1,5 +1,5 @@
 -- ========================================
--- VENDING MACHINE TOOLS v1.7 - NO MAX LIMIT
+-- VENDING MACHINE TOOLS v1.8 - WITH COUNTDOWN
 -- ========================================
 
 -- Global Variables
@@ -24,6 +24,18 @@ end_dialog|watermark|CANCEL|OK|
         v1 = "OnDialogRequest",
         v2 = dialog
     })
+end
+
+-- ========================================
+-- COUNTDOWN FUNCTION
+-- ========================================
+
+local function showCountdown(seconds)
+    for i = seconds, 1, -1 do
+        LogToConsole(string.format("`e⏳ Starting in %d seconds...", i))
+        Sleep(1000)
+    end
+    LogToConsole("`2✓ Starting now!")
 end
 
 -- ========================================
@@ -236,6 +248,12 @@ local function applyPriceChanges(packet)
     local processCount = 0
     local failCount = 0
     
+    -- COUNTDOWN 5 DETIK
+    LogToConsole("`9========== EDIT PRICE VENDING ==========")
+    LogToConsole(string.format("`9Preparing to update %d vending(s)...", totalSelected))
+    showCountdown(5)
+    LogToConsole("`9========================================")
+    
     for _, vendIdx in ipairs(selectedVendings) do
         local pricePattern = "price_vending_" .. vendIdx .. "|([^|\n]+)"
         local newPriceStr = packet:match(pricePattern)
@@ -274,7 +292,7 @@ local function applyPriceChanges(packet)
                 )
                 
                 SendPacket(2, packetData)
-                Sleep(500) -- Delay 100ms per proses
+                Sleep(500)
             else
                 failCount = failCount + 1
                 LogToConsole("`4Invalid vending data at index " .. vendIdx)
@@ -526,8 +544,11 @@ local function applyDisableVending()
     local successCount = 0
     local failCount = 0
     
+    -- COUNTDOWN 5 DETIK
     LogToConsole("`9========== DISABLING VENDING ==========")
-    LogToConsole(string.format("`9Starting to disable %d vending(s)...", totalSelected))
+    LogToConsole(string.format("`9Preparing to disable %d vending(s)...", totalSelected))
+    showCountdown(5)
+    LogToConsole("`9=======================================")
     
     for _, vendIdx in ipairs(selectedVendings) do
         local vend = vendingList[vendIdx]
@@ -559,7 +580,6 @@ local function applyDisableVending()
     end
     
     LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
-    LogToConsole("`9=======================================")
     
     -- Clear selection
     selectedVendings = {}
@@ -615,9 +635,9 @@ addHook(function(packetType, packet)
     
     if packet:find("select_empty") then
         selectedVendings = {}
-        selectedItems = {} -- Reset selected items
-        itemSelectionCount = 0 -- Reset counter
-        isSelectingItems = true -- Set flag
+        selectedItems = {}
+        itemSelectionCount = 0
+        isSelectingItems = true
         
         for i = 1, totalVending do
             if packet:find("vending_empty_" .. i .. "|1") then
@@ -626,7 +646,6 @@ addHook(function(packetType, packet)
         end
         
         if #selectedVendings > 0 then
-            -- Set batas maksimal = jumlah vending yang dipilih + 10
             maxSelectionCount = #selectedVendings + 10
             LogToConsole(string.format("`2Selected %d empty vending(s)", #selectedVendings))
             LogToConsole(string.format("`9You have %d selection chances before auto-confirm", maxSelectionCount))
@@ -638,19 +657,15 @@ addHook(function(packetType, packet)
         return true
     end
     
-    -- HANDLER: Update item dari item picker dengan sistem counter
     if packet:find("item_picker_empty") and isSelectingItems then
-        -- Cek apakah ini dari button OK atau dari item picker individual
         local hasButtonId = packet:find("buttonClicked|")
         
-        -- Update item selections
         local hasNewSelection = false
         for _, vendIdx in ipairs(selectedVendings) do
             local itemIDStr = packet:match("item_" .. vendIdx .. "|(%d+)")
             local itemID = tonumber(itemIDStr)
             
             if itemID and itemID > 0 then
-                -- Cek apakah ini selection baru atau update
                 if not selectedItems[vendIdx] or selectedItems[vendIdx] ~= itemID then
                     selectedItems[vendIdx] = itemID
                     hasNewSelection = true
@@ -662,35 +677,31 @@ addHook(function(packetType, packet)
             end
         end
         
-        -- Increment counter hanya jika ada selection baru dan bukan dari button OK
-        -- SETIAP packet item_picker_empty dihitung
         itemSelectionCount = itemSelectionCount + 1
         LogToConsole(string.format("`9Selection count: %d/%d", itemSelectionCount, maxSelectionCount))
-
         
-        -- Jika counter sudah mencapai batas atau user klik OK, lanjut ke konfirmasi
         if itemSelectionCount >= maxSelectionCount or hasButtonId then
             LogToConsole("`2Selection completed! Moving to confirmation...")
             isSelectingItems = false
-            itemSelectionCount = 0 -- Reset counter
+            itemSelectionCount = 0
             show_confirmation_empty()
         else
-            -- Jika belum, re-show dialog item picker dengan update counter
             show_item_picker_for_empty()
         end
         
         return true
     end
     
-    -- HANDLER: Konfirmasi final dan kirim ke server
     if packet:find("confirm_item_empty") then
-        -- Proses pengiriman ke server
         local totalSelected = #selectedVendings
         local successCount = 0
         local failCount = 0
         
-        LogToConsole("`9========== APPLYING ITEMS TO VENDING ==========")
-        LogToConsole(string.format("`9Starting to fill %d vending(s)...", totalSelected))
+        -- COUNTDOWN 5 DETIK
+        LogToConsole("`9========== FILLING EMPTY VENDING ==========")
+        LogToConsole(string.format("`9Preparing to fill %d vending(s)...", totalSelected))
+        showCountdown(5)
+        LogToConsole("`9===========================================")
         
         for _, vendIdx in ipairs(selectedVendings) do
             local itemID = selectedItems[vendIdx]
@@ -734,7 +745,6 @@ addHook(function(packetType, packet)
         end
         
         LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
-        LogToConsole("`9===============================================")
         
         -- Clear selections
         selectedVendings = {}
@@ -792,5 +802,5 @@ addHook(function(packetType, packet)
 end, "OnSendPacket")
 
 watermark()
-LogToConsole("`2Vending Machine Tools v1.1")
+LogToConsole("`2Vending Machine Tools v1.8 - WITH COUNTDOWN")
 LogToConsole("`9Type /start to open menu")
