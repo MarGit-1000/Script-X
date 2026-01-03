@@ -1,15 +1,15 @@
 -- ========================================
--- VENDING MACHINE TOOLS v1.7 - NO MAX LIMIT
+-- VENDING MACHINE TOOLS v1.8 - FRAME DIFFERENTIATION
 -- ========================================
 
 -- Global Variables
 local vendingList = {}
 local totalVending = 0
 local selectedVendings = {}
-local selectedItems = {} -- Storage untuk item yang dipilih
-local isSelectingItems = false -- Flag untuk mencegah auto-trigger
-local itemSelectionCount = 0 -- Counter untuk track berapa kali user memilih item
-local maxSelectionCount = 0 -- Batas maksimal selection (jumlah vending + 10)
+local selectedItems = {}
+local isSelectingItems = false
+local itemSelectionCount = 0
+local maxSelectionCount = 0
 
 function watermark()
 local dialog = [[
@@ -53,7 +53,8 @@ local function scanVendingMachines()
                 vendItemName = "Unknown",
                 vendPrice = tile.extra.vend_price or 0,
                 owner = tile.extra.owner or 0,
-                label = tile.extra.label or ""
+                label = tile.extra.label or "",
+                fgID = tile.fg  -- TAMBAHAN: Simpan foreground ID
             }
             
             -- Get item name
@@ -73,6 +74,17 @@ local function scanVendingMachines()
     return true
 end
 
+-- Fungsi helper untuk mendapatkan frame berdasarkan fg ID
+local function getFrameByFG(fgID)
+    if fgID == 2978 then
+        return "staticBlueFrame"  -- Vending biasa
+    elseif fgID == 9268 then
+        return "staticYellowFrame"  -- DigiVending
+    else
+        return ""  -- Default tanpa frame
+    end
+end
+
 -- Tampilkan vending list ke console
 local function showVendingList()
     if totalVending == 0 then
@@ -82,8 +94,10 @@ local function showVendingList()
     
     LogToConsole("`9========== VENDING LIST ==========")
     for i, vend in ipairs(vendingList) do
-        LogToConsole(string.format("`o%d. `2(%d, %d) `o- `3%s `o- Price: `e%d WL", 
-            i, 
+        local vendType = vend.fgID == 2978 and "`1[Vending]" or "`e[DigiVend]"
+        LogToConsole(string.format("`o%d. %s `2(%d, %d) `o- `3%s `o- Price: `e%d WL", 
+            i,
+            vendType,
             vend.position.x, 
             vend.position.y,
             vend.vendItemName,
@@ -105,8 +119,9 @@ local function exportVending()
     table.insert(output, "Total: " .. totalVending .. "\n")
     
     for i, vend in ipairs(vendingList) do
-        table.insert(output, string.format("#%d - (%d,%d) - %s - %d WL", 
-            i, vend.position.x, vend.position.y, vend.vendItemName, vend.vendPrice))
+        local vendType = vend.fgID == 2978 and "[Vending]" or "[DigiVend]"
+        table.insert(output, string.format("#%d %s - (%d,%d) - %s - %d WL", 
+            i, vendType, vend.position.x, vend.position.y, vend.vendItemName, vend.vendPrice))
     end
     
     local filename = "vending_" .. GetWorldName() .. ".txt"
@@ -125,10 +140,6 @@ add_spacer|small|
 add_button|price_vendingss|Edit Price Vending|left|
 add_button|empty_vending|Edit Empty Vending|left|
 add_button|disable_vending|Disable Vending|left|
---add_button|kosongkan_vending|Edit Stock Vending|left|
---add_spacer|small|
---add_button|scan_vending|Scan All Vending|left|
---add_button|export_vending|Export to File|left|
 add_quick_exit||
 end_dialog|main_menu|Cancel|OK|
 ]]
@@ -144,7 +155,6 @@ end
 -- ========================================
 
 function show_edit_price()
-    -- Scan vending terlebih dahulu
     if not scanVendingMachines() then
         return
     end
@@ -159,7 +169,6 @@ add_spacer|small|
         dialog = dialog .. "add_textbox|`4No vending machines found!|left|\n"
     else
         for i, vend in ipairs(vendingList) do
-            -- Validasi data sebelum menampilkan
             if vend and vend.vendItem and vend.vendItem > 0 
                and vend.position and vend.position.x and vend.position.y then
                 
@@ -169,10 +178,13 @@ add_spacer|small|
                     vend.vendPrice
                 )
                 
+                local frame = getFrameByFG(vend.fgID)
+                
                 dialog = dialog .. string.format(
-                    "add_checkicon|vending_%d|%s||%d||0|\n",
+                    "add_checkicon|vending_%d|%s|%s|%d||0|\n",
                     i,
                     displayText,
+                    frame,
                     vend.vendItem
                 )
             end
@@ -202,13 +214,15 @@ add_spacer|small|
         for idx, vendIdx in ipairs(selectedVendings) do
             local vend = vendingList[vendIdx]
             if vend then
+                local vendType = vend.fgID == 2978 and "`1[Vending]" or "`e[DigiVend]"
                 dialog = dialog .. string.format([[
-add_textbox|`w%d. %s - %d WL at (%d,%d)|left|
+add_textbox|`w%d. %s %s - %d WL at (%d,%d)|left|
 add_text_input|price_vending_%d|New Price:||15|
 add_checkbox|per_world_%d|`wPer World Lock|0|
 add_spacer|small|
 ]], 
                     idx,
+                    vendType,
                     vend.vendItemName,
                     vend.vendPrice,
                     vend.position.x,
@@ -269,7 +283,6 @@ local function applyPriceChanges(packet)
                         modeLabel
                     ))
                     
-                    -- Kirim packet untuk update vending
                     local packetData = string.format(
                         "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nsetprice|%d\nchk_peritem|%d\nchk_perlock|%d\n",
                         vend.position.x,
@@ -297,7 +310,6 @@ local function applyPriceChanges(packet)
             failCount
         ))
         
-        -- Clear selection
         selectedVendings = {}
     end)
 end
@@ -309,7 +321,6 @@ end
 function show_empty_vending()
     if not scanVendingMachines() then return end
     
-    -- Filter hanya vending yang kosong
     local emptyVendings = {}
     for i, vend in ipairs(vendingList) do
         if vend.vendItem == 0 then
@@ -334,16 +345,21 @@ add_spacer|small|
             local originalIdx = data.originalIndex
             
             if vend and vend.position and vend.position.x and vend.position.y then
+                local vendType = vend.fgID == 2978 and "`1[Vending]" or "`e[DigiVend]"
                 local displayText = string.format(
-                    "`wVending (%d,%d)",
+                    "`w%s (%d,%d)",
+                    vendType,
                     vend.position.x,
                     vend.position.y
                 )
                 
+                local frame = getFrameByFG(vend.fgID)
+                
                 dialog = dialog .. string.format(
-                    "add_checkicon|vending_empty_%d|%s||2||0|\n",
+                    "add_checkicon|vending_empty_%d|%s|%s|2||0|\n",
                     originalIdx,
-                    displayText
+                    displayText,
+                    frame
                 )
             end
         end
@@ -373,7 +389,6 @@ add_spacer|small|
         for idx, vendIdx in ipairs(selectedVendings) do
             local vend = vendingList[vendIdx]
             if vend then
-                -- Show selected item if any
                 local selectedItemText = ""
                 if selectedItems[vendIdx] then
                     local itemInfo = getItemInfoByID(selectedItems[vendIdx])
@@ -381,12 +396,15 @@ add_spacer|small|
                     selectedItemText = string.format(" `2(Selected: %s)", itemName)
                 end
                 
+                local vendType = vend.fgID == 2978 and "`1[Vending]" or "`e[DigiVend]"
+                
                 dialog = dialog .. string.format([[
-add_textbox|`w%d. Vending (%d,%d)%s|left|
+add_textbox|`w%d. %s (%d,%d)%s|left|
 add_item_picker|item_%d|`wSelect Item:|%s|
 add_spacer|small|
 ]], 
                     idx,
+                    vendType,
                     vend.position.x,
                     vend.position.y,
                     selectedItemText,
@@ -397,7 +415,6 @@ add_spacer|small|
         end
     end
     
-    -- Tampilkan counter di bawah
     dialog = dialog .. string.format(
         "add_textbox|`oSelection Counter: `e%d/%d `o(Auto-confirm when full)|left|\n",
         itemSelectionCount,
@@ -430,6 +447,7 @@ add_spacer|small|
         local itemID = selectedItems[vendIdx]
         
         if vend then
+            local vendType = vend.fgID == 2978 and "`1[Vending]" or "`e[DigiVend]"
             local itemText = "`4No item selected"
             if itemID and itemID > 0 then
                 local itemInfo = getItemInfoByID(itemID)
@@ -440,8 +458,9 @@ add_spacer|small|
             end
             
             dialog = dialog .. string.format(
-                "add_textbox|`w%d. Vending `9(%d,%d) `w-> %s|left|\n",
+                "add_textbox|`w%d. %s `9(%d,%d) `w-> %s|left|\n",
                 idx,
+                vendType,
                 vend.position.x,
                 vend.position.y,
                 itemText
@@ -523,7 +542,6 @@ local function applyEmptyVending()
         LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
         LogToConsole("`9===============================================")
         
-        -- Clear selections
         selectedVendings = {}
         selectedItems = {}
         itemSelectionCount = 0
@@ -538,7 +556,6 @@ end
 function show_disable_vending()
     if not scanVendingMachines() then return end
     
-    -- Filter hanya vending yang punya price/harga (price > 0)
     local activeVendings = {}
     for i, vend in ipairs(vendingList) do
         if vend.vendPrice > 0 then
@@ -563,18 +580,23 @@ add_spacer|small|
             local originalIdx = data.originalIndex
             
             if vend and vend.position and vend.position.x and vend.position.y then
+                local vendType = vend.fgID == 2978 and "`1[Vending]" or "`e[DigiVend]"
                 local displayText = string.format(
-                    "`wVending (%d,%d) - %s - `e%d WL",
+                    "`w%s (%d,%d) - %s - `e%d WL",
+                    vendType,
                     vend.position.x,
                     vend.position.y,
                     vend.vendItemName,
                     vend.vendPrice
                 )
                 
+                local frame = getFrameByFG(vend.fgID)
+                
                 dialog = dialog .. string.format(
-                    "add_checkicon|vending_disable_%d|%s||%d||0|\n",
+                    "add_checkicon|vending_disable_%d|%s|%s|%d||0|\n",
                     originalIdx,
                     displayText,
+                    frame,
                     vend.vendItem > 0 and vend.vendItem or 2
                 )
             end
@@ -618,7 +640,6 @@ local function applyDisableVending()
                     vend.position.y
                 ))
                 
-                -- Format packet untuk disable (set price = 0, peritem = 1, perlock = 0)
                 local packetData = string.format(
                     "action|dialog_return\ndialog_name|vending\ntilex|%d|\ntiley|%d|\nsetprice|0\nchk_peritem|1\nchk_perlock|0\n",
                     vend.position.x,
@@ -636,7 +657,6 @@ local function applyDisableVending()
         LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
         LogToConsole("`9=======================================")
         
-        -- Clear selection
         selectedVendings = {}
     end)
 end
@@ -648,13 +668,11 @@ end
 addHook(function(packetType, packet)
     if packetType ~= 2 then return false end
     
-    -- Main menu trigger
     if packet:find("/start") then
         show_menu()
         return true
     end
     
-    -- Feature 1: Edit Price Vending
     if packet:find("price_vendingss") then
         show_edit_price()
         return true
@@ -683,7 +701,6 @@ addHook(function(packetType, packet)
         return true
     end
     
-    -- Feature 2: Edit Empty Vending
     if packet:find("empty_vending") then
         show_empty_vending()
         return true
@@ -691,9 +708,9 @@ addHook(function(packetType, packet)
     
     if packet:find("select_empty") then
         selectedVendings = {}
-        selectedItems = {} -- Reset selected items
-        itemSelectionCount = 0 -- Reset counter
-        isSelectingItems = true -- Set flag
+        selectedItems = {}
+        itemSelectionCount = 0
+        isSelectingItems = true
         
         for i = 1, totalVending do
             if packet:find("vending_empty_" .. i .. "|1") then
@@ -702,7 +719,6 @@ addHook(function(packetType, packet)
         end
         
         if #selectedVendings > 0 then
-            -- Set batas maksimal = jumlah vending yang dipilih + 10
             maxSelectionCount = #selectedVendings + 10
             LogToConsole(string.format("`2Selected %d empty vending(s)", #selectedVendings))
             LogToConsole(string.format("`9You have %d selection chances before auto-confirm", maxSelectionCount))
@@ -714,19 +730,15 @@ addHook(function(packetType, packet)
         return true
     end
     
-    -- HANDLER: Update item dari item picker dengan sistem counter
     if packet:find("item_picker_empty") and isSelectingItems then
-        -- Cek apakah ini dari button OK atau dari item picker individual
         local hasButtonId = packet:find("buttonClicked|")
         
-        -- Update item selections
         local hasNewSelection = false
         for _, vendIdx in ipairs(selectedVendings) do
             local itemIDStr = packet:match("item_" .. vendIdx .. "|(%d+)")
             local itemID = tonumber(itemIDStr)
             
             if itemID and itemID > 0 then
-                -- Cek apakah ini selection baru atau update
                 if not selectedItems[vendIdx] or selectedItems[vendIdx] ~= itemID then
                     selectedItems[vendIdx] = itemID
                     hasNewSelection = true
@@ -738,33 +750,26 @@ addHook(function(packetType, packet)
             end
         end
         
-        -- Increment counter hanya jika ada selection baru dan bukan dari button OK
-        -- SETIAP packet item_picker_empty dihitung
         itemSelectionCount = itemSelectionCount + 1
         LogToConsole(string.format("`9Selection count: %d/%d", itemSelectionCount, maxSelectionCount))
-
         
-        -- Jika counter sudah mencapai batas atau user klik OK, lanjut ke konfirmasi
         if itemSelectionCount >= maxSelectionCount or hasButtonId then
             LogToConsole("`2Selection completed! Moving to confirmation...")
             isSelectingItems = false
-            itemSelectionCount = 0 -- Reset counter
+            itemSelectionCount = 0
             show_confirmation_empty()
         else
-            -- Jika belum, re-show dialog item picker dengan update counter
             show_item_picker_for_empty()
         end
         
         return true
     end
     
-    -- HANDLER: Konfirmasi final dan kirim ke server
     if packet:find("confirm_item_empty") then
         applyEmptyVending()
         return true
     end
     
-    -- Feature 3: Disable Vending
     if packet:find("disable_vending") then
         show_disable_vending()
         return true
@@ -788,20 +793,12 @@ addHook(function(packetType, packet)
         return true
     end
     
-    -- Feature 4: Edit Stock Vending (TODO)
-    if packet:find("kosongkan_vending") then
-        LogToConsole("`4Feature not implemented yet!")
-        return true
-    end
-    
-    -- Utility: Scan Vending
     if packet:find("scan_vending") then
         scanVendingMachines()
         showVendingList()
         return true
     end
     
-    -- Utility: Export Vending
     if packet:find("export_vending") then
         exportVending()
         return true
@@ -811,5 +808,5 @@ addHook(function(packetType, packet)
 end, "OnSendPacket")
 
 watermark()
-LogToConsole("`2Vending Machine Tools v1.7 [X-SCRIPT]")
+LogToConsole("`2Vending Machine Tools v1.8 [X-SCRIPT]")
 LogToConsole("`9Type /start to open menu")
