@@ -11,6 +11,21 @@ local isSelectingItems = false -- Flag untuk mencegah auto-trigger
 local itemSelectionCount = 0 -- Counter untuk track berapa kali user memilih item
 local maxSelectionCount = 0 -- Batas maksimal selection (jumlah vending + 10)
 
+function watermark()
+local dialog = [[
+add_label_with_icon|big|`wX-SCRIPT|left|15110|
+add_textbox|`wTerima Kasih Telah Menggunakan Script dari X-SCRIPT, Untuk Update Selanjutnya Silahkan Klik Button Di bawah Ini!|left|
+add_url_button|comment|`wOpen Channel X-SCRIPT|color:0,0,0,0|https://whatsapp.com/channel/0029Vb60Vev2phHGjCHMpp3h||0|0|
+add_quick_exit||
+end_dialog|watermark|CANCEL|OK|
+]]
+    
+    SendVariant({
+        v1 = "OnDialogRequest",
+        v2 = dialog
+    })
+end
+
 -- ========================================
 -- UTILITY FUNCTIONS
 -- ========================================
@@ -109,11 +124,11 @@ add_label_with_icon|big|`9Vending Machine Tools|left|9270|
 add_spacer|small|
 add_button|price_vendingss|Edit Price Vending|left|
 add_button|empty_vending|Edit Empty Vending|left|
-add_button|disable_vending|Edit Enable/Disable Vending|left|
-add_button|kosongkan_vending|Edit Stock Vending|left|
-add_spacer|small|
-add_button|scan_vending|Scan All Vending|left|
-add_button|export_vending|Export to File|left|
+add_button|disable_vending|Disable Vending|left|
+--add_button|kosongkan_vending|Edit Stock Vending|left|
+--add_spacer|small|
+--add_button|scan_vending|Scan All Vending|left|
+--add_button|export_vending|Export to File|left|
 add_quick_exit||
 end_dialog|main_menu|Cancel|OK|
 ]]
@@ -776,5 +791,6 @@ addHook(function(packetType, packet)
     return false
 end, "OnSendPacket")
 
-LogToConsole("`2Vending Machine Tools v1.9 - FIXING!")
+watermark()
+LogToConsole("`2Vending Machine Tools v1")
 LogToConsole("`9Type /start to open menu")
