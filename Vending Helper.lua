@@ -137,9 +137,9 @@ function show_menu()
     local dialog = [[
 add_label_with_icon|big|`9Vending Machine Tools|left|9270|
 add_spacer|small|
-add_button|price_vendingss|Edit Price Vending|left|
-add_button|empty_vending|Edit Empty Vending|left|
-add_button|le_vending|le Vending|left|
+add_button|price_vendingss|`wEdit Price Vending|left|
+add_button|empty_vending|`wEdit Empty Vending|left|
+add_button|disable_vending|`wDisable Vending|left|
 add_quick_exit||
 end_dialog|main_menu|Cancel|OK|
 ]]
