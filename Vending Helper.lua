@@ -808,5 +808,5 @@ addHook(function(packetType, packet)
 end, "OnSendPacket")
 
 watermark()
-LogToConsole("`2Vending Machine Tools v2.1 [X-SCRIPT]")
+LogToConsole("`2Vending Machine Tools v2.2 [X-SCRIPT]")
 LogToConsole("`9Type /start to open menu")
