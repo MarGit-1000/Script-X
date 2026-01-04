@@ -808,6 +808,18 @@ end
 -- PACKET HOOK HANDLER
 -- ========================================
 
+-- Helper function to save current page selections before navigating
+local function saveCurrentPageSelections(packet, prefix)
+    for i = 1, totalVending do
+        local key = prefix .. "_" .. i
+        if packet:find(key .. "|1") then
+            selectedVendings[i] = true
+        elseif packet:find(key .. "|0") then
+            selectedVendings[i] = nil
+        end
+    end
+end
+
 addHook(function(packetType, packet)
     if packetType ~= 2 then return false end
     
@@ -823,12 +835,16 @@ addHook(function(packetType, packet)
     
     -- Navigation for Edit Price
     if packet:find("next_page_edit") then
+        -- Save current page selections before moving to next page
+        saveCurrentPageSelections(packet, "vending")
         currentPage = currentPage + 1
         show_edit_price_page()
         return true
     end
     
     if packet:find("prev_page_edit") then
+        -- Save current page selections before moving to previous page
+        saveCurrentPageSelections(packet, "vending")
         currentPage = currentPage - 1
         show_edit_price_page()
         return true
@@ -836,13 +852,8 @@ addHook(function(packetType, packet)
     
     if packet:find("edit_price") then
         -- Simpan pilihan user dari halaman saat ini
-        for i = 1, totalVending do
-            if packet:find("vending_" .. i .. "|1") then
-                selectedVendings[i] = true
-            elseif packet:find("vending_" .. i .. "|0") then
-                selectedVendings[i] = nil
-            end
-        end
+        -- Using helper function for consistency
+        saveCurrentPageSelections(packet, "vending")
         
         -- Konversi ke array untuk tampilan
         local tempArray = {}
@@ -871,12 +882,16 @@ addHook(function(packetType, packet)
     
     -- Navigation for Empty Vending
     if packet:find("next_page_empty") then
+        -- Save current page selections before moving to next page
+        saveCurrentPageSelections(packet, "vending_empty")
         currentPage = currentPage + 1
         show_empty_vending_page()
         return true
     end
 
     if packet:find("prev_page_empty") then
+        -- Save current page selections before moving to previous page
+        saveCurrentPageSelections(packet, "vending_empty")
         currentPage = currentPage - 1
         show_empty_vending_page()
         return true
@@ -884,13 +899,8 @@ addHook(function(packetType, packet)
     
     if packet:find("select_empty") then
         -- Simpan pilihan user dari halaman saat ini
-        for i = 1, totalVending do
-            if packet:find("vending_empty_" .. i .. "|1") then
-                selectedVendings[i] = true
-            elseif packet:find("vending_empty_" .. i .. "|0") then
-                selectedVendings[i] = nil
-            end
-        end
+        -- Using helper function for consistency
+        saveCurrentPageSelections(packet, "vending_empty")
         
         -- Hitung jumlah vending yang dipilih
         local count = 0
@@ -959,12 +969,16 @@ addHook(function(packetType, packet)
     
     -- Navigation for Disable Vending
     if packet:find("next_page_disable") then
+        -- Save current page selections before moving to next page
+        saveCurrentPageSelections(packet, "vending_disable")
         currentPage = currentPage + 1
         show_disable_vending_page()
         return true
     end
     
     if packet:find("prev_page_disable") then
+        -- Save current page selections before moving to previous page
+        saveCurrentPageSelections(packet, "vending_disable")
         currentPage = currentPage - 1
         show_disable_vending_page()
         return true
@@ -972,13 +986,8 @@ addHook(function(packetType, packet)
     
     if packet:find("apply_disable") then
         -- Simpan pilihan user dari halaman saat ini
-        for i = 1, totalVending do
-            if packet:find("vending_disable_" .. i .. "|1") then
-                selectedVendings[i] = true
-            elseif packet:find("vending_disable_" .. i .. "|0") then
-                selectedVendings[i] = nil
-            end
-        end
+        -- Using helper function for consistency
+        saveCurrentPageSelections(packet, "vending_disable")
         
         -- Hitung jumlah vending yang dipilih
         local count = 0
@@ -1002,6 +1011,6 @@ end, "OnSendPacket")
 -- STARTUP
 -- ========================================
 
-LogToConsole("`2Vending Machine Tools v1.9 Loaded!")
+LogToConsole("`2Vending Machine Tools v2.0 Loaded!")
 LogToConsole("`9Type /start to open menu")
 watermark()
