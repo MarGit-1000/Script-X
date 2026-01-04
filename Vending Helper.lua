@@ -139,7 +139,7 @@ add_label_with_icon|big|`9Vending Machine Tools|left|9270|
 add_spacer|small|
 add_button|price_vendingss|Edit Price Vending|left|
 add_button|empty_vending|Edit Empty Vending|left|
-add_button|disable_vending|Disable Vending|left|
+add_button|le_vending|le Vending|left|
 add_quick_exit||
 end_dialog|main_menu|Cancel|OK|
 ]]
@@ -558,7 +558,7 @@ function show_disable_vending()
     
     local activeVendings = {}
     for i, vend in ipairs(vendingList) do
-        if vend.vendPrice > 0 then
+        if vend.vendPrice != 0 then
             table.insert(activeVendings, {
                 originalIndex = i,
                 vend = vend
@@ -808,5 +808,5 @@ addHook(function(packetType, packet)
 end, "OnSendPacket")
 
 watermark()
-LogToConsole("`2Vending Machine Tools v2 [X-SCRIPT]")
+LogToConsole("`2Vending Machine Tools v2.1 [X-SCRIPT]")
 LogToConsole("`9Type /start to open menu")
