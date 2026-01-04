@@ -254,7 +254,7 @@ local function applyPriceChanges(packet)
         local processCount = 0
         local failCount = 0
         
-        LogToConsole("`9========== STARTING PRICE UPDATE ==========")
+        --LogToConsole("`9========== STARTING PRICE UPDATE ==========")
         
         for _, vendIdx in ipairs(selectedVendings) do
             local pricePattern = "price_vending_" .. vendIdx .. "|([^|\n]+)"
@@ -495,7 +495,7 @@ local function applyEmptyVending()
         local successCount = 0
         local failCount = 0
         
-        LogToConsole("`9========== APPLYING ITEMS TO VENDING ==========")
+        --LogToConsole("`9========== APPLYING ITEMS TO VENDING ==========")
         LogToConsole(string.format("`9Starting to fill %d vending(s)...", totalSelected))
         
         for _, vendIdx in ipairs(selectedVendings) do
@@ -540,7 +540,7 @@ local function applyEmptyVending()
         end
         
         LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
-        LogToConsole("`9===============================================")
+     --   LogToConsole("`9===============================================")
         
         selectedVendings = {}
         selectedItems = {}
@@ -580,7 +580,7 @@ add_spacer|small|
             local originalIdx = data.originalIndex
             
             if vend and vend.position and vend.position.x and vend.position.y then
-                local vendType = vend.fgID == 2978 and "`1[Vending]" or "`e[DigiVend]"
+                local vendType = "`w"
                 local displayText = string.format(
                     "`w%s (%d,%d) - %s - `e%d WL",
                     vendType,
@@ -623,7 +623,7 @@ local function applyDisableVending()
         local successCount = 0
         local failCount = 0
         
-        LogToConsole("`9========== DISABLING VENDING ==========")
+        --LogToConsole("`9========== DISABLING VENDING ==========")
         LogToConsole(string.format("`9Starting to disable %d vending(s)...", totalSelected))
         
         for _, vendIdx in ipairs(selectedVendings) do
@@ -655,7 +655,7 @@ local function applyDisableVending()
         end
         
         LogToConsole(string.format("`9[DONE] `2Success: %d | `4Failed: %d", successCount, failCount))
-        LogToConsole("`9=======================================")
+       -- LogToConsole("`9=======================================")
         
         selectedVendings = {}
     end)
@@ -808,5 +808,5 @@ addHook(function(packetType, packet)
 end, "OnSendPacket")
 
 watermark()
-LogToConsole("`2Vending Machine Tools v1.8 [X-SCRIPT]")
+LogToConsole("`2Vending Machine Tools v2 [X-SCRIPT]")
 LogToConsole("`9Type /start to open menu")
