@@ -1,3 +1,18 @@
+function watermark()
+local dialog = [[
+add_label_with_icon|big|`wX-SCRIPT|left|15110|
+add_textbox|`wTerima Kasih Telah Menggunakan Script dari X-SCRIPT, Untuk Update Selanjutnya Silahkan Klik Button Di bawah Ini!|left|
+add_url_button|comment|`wOpen Channel X-SCRIPT|color:0,0,0,0|https://whatsapp.com/channel/0029Vb60Vev2phHGjCHMpp3h||0|0|
+add_quick_exit||
+end_dialog|watermark|CANCEL|OK|
+]]
+    
+    SendVariant({
+        v1 = "OnDialogRequest",
+        v2 = dialog
+    })
+end
+
 -- Konfigurasi prioritas block
 local blockPriority = {
     {id = 16, name = "Grass", priority = 1},
@@ -224,5 +239,6 @@ function processBlockType(blockId, blockName, isBackground)
 end
 
 -- Jalankan fungsi utama
-LogToConsole("versi 1.1.6 - Auto punch FG & BG (simplified)")
+LogToConsole("versi 1")
+watermark()
 destroyAllBlocks()
