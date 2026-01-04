@@ -558,7 +558,7 @@ function show_disable_vending()
     
     local activeVendings = {}
     for i, vend in ipairs(vendingList) do
-        if vend.vendPrice != 0 then
+        if vend.vendPrice ~= 0 then
             table.insert(activeVendings, {
                 originalIndex = i,
                 vend = vend
